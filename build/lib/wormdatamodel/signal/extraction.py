@@ -130,8 +130,6 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         return Signal
         
     elif method=="fitSphere":
-        # Doesn't really seem to help. Dropping it right now..
-        
         # Right now this is fixed, it cannot be chosen
         box_size = (2,3,3)
         nElements = np.prod(box_size)
