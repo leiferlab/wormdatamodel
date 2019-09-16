@@ -43,7 +43,7 @@ class recording:
     filenameZDetails = "zScan.json"
     filenameOptogeneticsTwoPhoton = "pharosTriggers.txt"
     
-    def __init__(self, foldername, legacy=False, rectype="3d"):
+    def __init__(self, foldername, mode=""):
         '''
         Class constructor: Do not load all the data from the constructor, so 
         that the class can be used also in a light-weight mode.
@@ -53,9 +53,7 @@ class recording:
         else:
             self.foldername = foldername+"/"
         self.filename = foldername+self.filenameFrames
-        
-        self.legacy = legacy
-        self.rectype = rectype
+        self.mode = mode
         
         # Open file
         self.file = open(self.foldername+self.filenameFrames, 'br')
@@ -75,15 +73,9 @@ class recording:
     def __exit__(self, type, value, traceback):
         self.file.close()
         del self.frame
-        
-    def load(self, *args, **kwargs):
-        if self.rectype=="3d":
-            self._load_3d(*args, **kwargs)
-        elif self.rectype=="2d":
-            self._load_2d(*args, **kwargs)
     
-    def _load_3d(self, startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, 
-                jobMaxMemory=100*2**30):
+    def load(self, startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, 
+                mode="", jobMaxMemory=100*2**30):
         
         if nVolume!=-1:
             startFrame = self.volumeFirstFrame[startVolume]
@@ -116,7 +108,7 @@ class recording:
                                                 dtype=np.uint32)
             
             # Load the frames
-            if self.legacy==True:
+            if self.mode=="legacy":
                 self.load_frames_legacy(startFrame, self.frameN)
             else:
                 self.load_frames(startFrame, self.frameN)
@@ -133,40 +125,6 @@ class recording:
         # Initialize lock of the buffer, to avoid loading more data when you
         # cannot. The simple version is to get a single lock on everything.
         #self.frameBufferLocks = np.zeros(self.frameBufferSize, dtype=np.bool)
-        
-    def _load_2d(self, startFrame=0, stopFrame=-1, jobMaxMemory=100*2**30):
-               
-        if stopFrame==-1: 
-            # Calculate number of frames contained in the file and subtract 
-            # initial frames skipped
-            self.frameN = os.stat(filename).st_size / self.frameSizeBytes
-            self.frameN -= startFrame
-            
-        else:
-            self.frameN = stopFrame - startFrame
-        
-        # Get an estimate of the memory that will be used in the analysis
-        self.memoryEstimatedUsage = self._get_memoryEstimatedUsage()
-
-        # Now you should check that you are not loading and allocating more data
-        # that can be contained in RAM. If you think you're hitting the limit
-        # load up to a maximum number of frames and store the position you reach
-        # in the file.
-        
-        #self.frameBufferSize = int(round(min(self.memoryEstimatedUsage, jobMaxMemory))) // self.frameSizeBytes
-        if self.memoryEstimatedUsage > jobMaxMemory:
-            self.memorySaturated = True
-            print("You tried to load more data than memory available. Nothing done.")
-        else:
-            # Initialize look-up table for actual frame indexes inside the buffer
-            self.frameBufferIndexes = np.zeros(self.frameN, 
-                                                dtype=np.uint32)
-            
-            # Load the frames
-            if self.legacy==True:
-                self.load_frames_legacy(startFrame, self.frameN)
-            else:
-                self.load_frames(startFrame, self.frameN)
             
         
     def load_frames(self, startFrame=0, frameN=0):
@@ -207,14 +165,8 @@ class recording:
         
         self.frameBufferIndexes = np.arange(startFrame,
                                         startFrame+frameN).astype(np.uint32)
-                                        
-    def load_extra(self):
-        if self.rectype=="3d":
-            self._load_extra_3d()
-        elif self.rectype=="3d":
-            self._load_extra_2d()
         
-    def _load_extra_3d(self):
+    def load_extra(self):
         '''
         Load extra information recorded.
         '''
@@ -282,12 +234,6 @@ class recording:
 
         #self.stackIdx = np.array(sio.loadmat(self.foldername+'hiResData.mat')['dataAll'][0][0][4])
         #self.stackIdx = self.stackIdx.reshape(self.stackIdx.shape[0])
-        
-    def _load_extra_2d(self):
-        framesDetails = np.loadtxt(self.foldername+self.filenameFramesDetails,skiprows=1).T
-        self.T = framesDetails[0]
-        self.frameCount = framesDetails[1].astype(int)
-        
         
     def load_optogenetics(self):
         if os.path.isfile(self.foldername+self.filenameOptogeneticsTwoPhoton):

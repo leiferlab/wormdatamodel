@@ -38,7 +38,7 @@ static PyObject *load_frames_legacy(PyObject *self, PyObject *args) {
     const char *fname;
     PyObject *frames_o;
     
-    if(!PyArg_ParseTuple(args, "ciiiiO", 
+    if(!PyArg_ParseTuple(args, "siiiiO", 
         &fname, &startFrame, &frameN, &rowSize, &rowN, &frames_o)) return NULL;
     
     PyObject *frames_a = PyArray_FROM_OTF(frames_o, NPY_UINT16, NPY_IN_ARRAY);
@@ -70,33 +70,33 @@ static PyObject *load_frames_legacy(PyObject *self, PyObject *args) {
     char *memblock;
     int framesize_char = rowSize*rowN*2;
     int rowsize_char = rowSize*2;
-    int fullrowsize_char = rowSize*2*2; //(2 for full row, 2 for uint16->char)
     
     // Convert the pointer to the frames array from a pointer to uint16_t to 
     // a pointer to char, so that it can be correctly used in file.read().
     memblock = (char*)frames;
+    //*memblock = 3;
+    //memblock = memblock + 2;
+    //*memblock = 10;
+    //std::cout<<(int)*memblock<<(int)*(memblock+1);//<<"\n"<<frames;
     
     // For each frame
     for(int i=0;i<frameN;i++){
         // For each full row
         for(int n=0;n<rowN;n++){
             // Copy the first half of the row (red).
+            memblock = (char*)frames + 2*i*framesize_char + n*rowsize_char;
+            file.seekg(2*i*framesize_char+2*n*rowsize_char);
             file.read(memblock, rowsize_char);
             // Move the pointer a frame (i.e. channel, half of the full frame
-            // for each time) forward,
-            memblock += framesize_char;
+            // for each time) forward.
+            memblock = (char*)frames + (2*i+1)*framesize_char + n*rowsize_char;
+            file.seekg(2*i*framesize_char+(2*n+1)*rowsize_char);
             // Read the second half row (green).
             file.read(memblock, rowsize_char);
             // Go back to the red channel.
-            memblock -= framesize_char;
             // If you're not at the end of the allocated frames, move one full
             // row forward.
-            if(i<(frameN-1)){ memblock += fullrowsize_char;}
         }
-        // If you're not at the end of the allocated frames, move one channel 
-        // forward, otherwsise you'll write the next red line on the first
-        // green line of the last frame.
-        if(i<(frameN-1)){memblock += framesize_char*2;}
     }
     
     //////////////////////////////////
