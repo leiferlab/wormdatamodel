@@ -52,7 +52,7 @@ class recording:
             self.foldername = foldername
         else:
             self.foldername = foldername+"/"
-        self.filename = foldername+self.filenameFrames
+        self.filename = self.foldername+self.filenameFrames
         
         self.legacy = legacy
         self.rectype = rectype
@@ -92,7 +92,7 @@ class recording:
         if stopFrame==-1: 
             # Calculate number of frames contained in the file and subtract 
             # initial frames skipped
-            self.frameN = os.stat(filename).st_size / self.frameSizeBytes
+            self.frameN = os.stat(self.filename).st_size / self.frameSizeBytes
             self.frameN -= startFrame
             
         else:
@@ -139,8 +139,9 @@ class recording:
         if stopFrame==-1: 
             # Calculate number of frames contained in the file and subtract 
             # initial frames skipped
-            self.frameN = os.stat(filename).st_size / self.frameSizeBytes
+            self.frameN = os.stat(self.filename).st_size / self.frameSizeBytes
             self.frameN -= startFrame
+            self.frameN = (int)(self.frameN)
             
         else:
             self.frameN = stopFrame - startFrame
@@ -211,7 +212,7 @@ class recording:
     def load_extra(self):
         if self.rectype=="3d":
             self._load_extra_3d()
-        elif self.rectype=="3d":
+        elif self.rectype=="2d":
             self._load_extra_2d()
         
     def _load_extra_3d(self):

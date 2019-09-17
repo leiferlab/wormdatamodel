@@ -65,9 +65,19 @@ def _generate_box_indices(Centers, box_size=(1,3,3), Box=np.array([])):
     else:
         nElements = Box.shape[1]
         
+        
+    '''#It was
     Centers_rep = np.repeat(Centers,nElements,axis=0).T.reshape((nCenters,nCoord,nElements))
     for coord in np.arange(nCoord):
-        Centers_rep[coord] += Box[coord]
+        #This was the original one, but it's something weird (compare it with the reshaped shape above
+        #Centers_rep[coord] += Box[coord]
+    Indices = Centers_rep.reshape((nCoord,nCenters*nElements))
+    '''
+    
+    Centers_rep = np.repeat(Centers,nElements,axis=0).T.reshape((nCoord,nCenters,nElements))
+    
+    for coord in np.arange(nCoord):
+        Centers_rep += Box[:,None,:]
     
     Indices = Centers_rep.reshape((nCoord,nCenters*nElements))
     
@@ -88,8 +98,8 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         nElements = np.prod(box_size)
         
         if len(box_size)!=nCoord:
-            print("Number of coordinates in Neuron coordinate and box_size don't \
-                match.")
+            print("Number of coordinates in Neuron coordinate and box_size "+\
+                "don't match.")
             quit()
 
         # Generate indices for all the pixels in the boxes surrounding each neuron
