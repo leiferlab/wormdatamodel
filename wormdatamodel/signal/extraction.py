@@ -90,6 +90,28 @@ def _slice_array(Array, Indices):
         return Array[Indices[0],Indices[1],Indices[2]]
     
 def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
+    '''Extracts the intensities in Frames at the position specified by Neurons.
+    
+    Parameters
+    ----------
+    Frames: numpy array
+        Frames[z,y,x] images. Pass an already-sliced array if there are multiple
+        channels. E.g., if you have Frames[z,ch,y,x], pass Frames[:,ch,...]
+    Neurons: numpy array
+        Neurons[n] zyx position at which to extract the intensity for neuron n.
+    method: string, optional
+        Method used to extract the intensities. Default: box.
+    framePixelOffset: float, optional
+        Offset of the pixel intensities possibly set by the camera. For the 
+        Hamamatsu ORCA Flash it is approximately 100 for each pixel in the bin.
+        Subtracted only here to avoid problems with integer arithmetic or 
+        unnecessary conversions to float. Default: 0
+    
+    Returns
+    -------
+    Signal: numpy array
+        Signal[n] gives the intensity of the neuron n.
+    '''
     nNeuron = Neurons.shape[0]
     nCoord = Neurons.shape[1]
     
