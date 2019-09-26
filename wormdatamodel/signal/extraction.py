@@ -161,6 +161,32 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         
         return Signal
         
+    elif method=="weightedMask2d":
+        weights = kwargs['weights']
+        
+        #hard coded indices - curvature extraction in neuronsegmentation-c
+        nElements = 13
+        Box = np.array([
+            [0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [-2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2],
+            [0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0]
+            ])
+        
+        # Generate indices based on box
+        Indices = _generate_box_indices(Neurons, Box=Box)
+        
+        # Extract the values for each pixel
+        Values = _slice_array(Frames,Indices).astype(np.float)
+        
+        # Reshape, multiply by weights and sum values in each box
+        Values = Values.reshape((nNeuron,nElements))-framePixelOffset
+        wValues = Values*weights
+        wValues /= np.sum(weights,axis=1)[:,None]
+        
+        Signal = np.average(Values, axis=1)
+        
+        return Signal
+        
     elif method=="fitSphere":
         # Doesn't really seem to help. Dropping it right now..
         

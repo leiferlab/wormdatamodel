@@ -57,9 +57,6 @@ class recording:
         self.legacy = legacy
         self.rectype = rectype
         
-        # Open file
-        self.file = open(self.foldername+self.filenameFrames, 'br')
-        
         # Load extra information
         self.load_extra()
         
@@ -73,7 +70,6 @@ class recording:
         return self
         
     def __exit__(self, type, value, traceback):
-        self.file.close()
         del self.frame
         
     def load(self, *args, **kwargs):
@@ -81,6 +77,10 @@ class recording:
             self._load_3d(*args, **kwargs)
         elif self.rectype=="2d":
             self._load_2d(*args, **kwargs)
+    
+    def free_memory(self):
+        del self.frame
+        self.frame = np.array([])
     
     def _load_3d(self, startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, 
                 jobMaxMemory=100*2**30):
@@ -174,6 +174,8 @@ class recording:
         '''
         Loads the specified frames into the buffer.
         '''
+        # Open file
+        self.file = open(self.foldername+self.filenameFrames, 'br')
         # Go to desired start frame
         self.file.seek(self.frameSizeBytes*startFrame)
         
@@ -183,6 +185,8 @@ class recording:
                         self.channelSizeY,self.channelSizeX)
                         
         self.filePosition = self.file.tell()
+        # Close file
+        self.file.close()
         self.frameLastLoaded = startFrame+frameN
         
         self.frameBufferIndexes = np.arange(startFrame,
@@ -261,6 +265,7 @@ class recording:
         # frameCount, and volumeIndex (not volumeIndexDAQ) can be indexed using
         # self.volumeFirstFrame.
         self.volumeFirstFrame = np.where(np.diff(volumeIndex)==1)[0] 
+        self.nVolume = len(self.volumeFirstFrame)-2
         
         # Get the details about the Z scan. The values in the DAQ file are in V.
         # The file contains also the etlCalibrationMindpt and Maxdpt, which 
@@ -335,6 +340,9 @@ class recording:
         '''
         
         return self.frameN * self.frameSizeBytes * 1.1
+        
+    def _get_memoryUsagePerVolume(self, nFrameInVol=35):
+        return nFrameInVol*self.frameSizeBytes*1.3
         
     def get_volume(self, i):
         '''
