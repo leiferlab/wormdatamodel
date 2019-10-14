@@ -198,15 +198,15 @@ class recording:
         image is stored line0R,line0G,line1R,line1G,...
         '''
         
-        self.file.close()
-        self.frame = np.empty(frameN*self.frameSize, dtype=np.uint16).reshape(
+        #self.file.close()
+        self.frame = 3*np.ones(frameN*self.frameSize, dtype=np.uint16).reshape( #TODO TODO TODO TODO TODO TODO
                                         frameN,self.channelN,
                                         self.channelSizeY,self.channelSizeX)
         wormdm.data.load_frames_legacy(self.foldername+self.filenameFrames, 
-                                   startFrame, frameN, 
-                                   self.channelSizeX, self.channelSizeY,
+                                   (np.int32)(startFrame), (np.int32)(frameN), 
+                                   (np.int32)(self.channelSizeX), (np.int32)(self.channelSizeY),
                                    self.frame)
-        self.file = open(self.foldername+self.filenameFrames, 'br')
+        #self.file = open(self.foldername+self.filenameFrames, 'br')
         
         self.frameLastLoaded = startFrame+frameN
         
@@ -237,6 +237,18 @@ class recording:
         volumeDirectionDAQ = frameSync[2].astype(int)
         ZDAQ = frameSync[1]
         
+        # Correct frameCount: sometimes the frameCount jumps by 2 at one step
+        # and by 0 at the next one. TODO: check whether the index in the buffer
+        # changes accordingly, or if I'm saving the same frame twice.
+        frameCountCorr = np.copy(frameCount)
+        dframeCount = np.diff(frameCount)
+        
+        for i in np.arange(len(frameCount)-1):
+            if(dframeCount[i]==0 and dframeCount[i-1]==2):
+                frameCountCorr[i] -= 1
+
+        frameCount = frameCountCorr
+        
         # Get the volume to which each frame in FrameDetails belongs from the DAQ data
         volumeIndex = np.ones_like(frameCount)*(-10)
         self.volumeDirection = np.empty(len(frameCount),dtype=np.int8)
@@ -251,6 +263,16 @@ class recording:
                 self.volumeDirection[i] = (volumeDirectionDAQ[indexInDAQ]+1)//2
             except:
                 pass
+                
+        # Use the derivative of Z to determine the volumeDirection, instead of
+        # the output of the differentiator. The latter has some problems...
+        # Maybe you should change the 
+        if self.legacy:
+            print("Using the derivative of Z to determine the volume direction and the volume index, instead of the output of the differentiator. (Legacy)")
+            self.volumeDirection[:-1] = np.sign(np.diff(self.Z))
+            self.volumeDirection[-1] = self.volumeDirection[-2]
+            self.volumeDirection = (-self.volumeDirection+1)//2
+            volumeIndex = np.cumsum(np.absolute(np.diff(self.volumeDirection)))
        
         # Interpolate missing values for Z and volumeDirection
         # TODO This however, assumes that there are no gaps in frameCount
@@ -341,7 +363,9 @@ class recording:
         
         return self.frameN * self.frameSizeBytes * 1.1
         
-    def _get_memoryUsagePerVolume(self, nFrameInVol=35):
+    def _get_memoryUsagePerVolume(self, nFrameInVol=None):
+        if nFrameInVol is None:
+            nFrameInVol = np.max(np.diff(self.volumeFirstFrame))
         return nFrameInVol*self.frameSizeBytes*1.3
         
     def get_volume(self, i):

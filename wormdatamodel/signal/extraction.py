@@ -1,6 +1,7 @@
 import numpy as np
 
-def _generate_box_indices(Centers, box_size=(1,3,3), Box=np.array([])):
+def _generate_box_indices(Centers, box_size=(1,3,3), Box=np.array([]), 
+                          shape=[None,None,None]):
     '''
     Generate indices for slicing of an array to extract boxes/windows of given
     size centered on Centers.
@@ -80,6 +81,8 @@ def _generate_box_indices(Centers, box_size=(1,3,3), Box=np.array([])):
         Centers_rep += Box[:,None,:]
     
     Indices = Centers_rep.reshape((nCoord,nCenters*nElements))
+    for q in np.arange(len(shape)):
+        np.clip(Indices[q],0,shape[q]-1,Indices[q])
     
     return Indices
     
@@ -147,7 +150,7 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
             ])
         
         # Generate indices based on box
-        Indices = _generate_box_indices(Neurons, Box=Box)
+        Indices = _generate_box_indices(Neurons, Box=Box, shape=Frames.shape)
         
         # Extract the values for each pixel
         Values = _slice_array(Frames,Indices).astype(np.float)
@@ -157,7 +160,12 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         wValues = Values*weights
         wValues /= np.sum(weights,axis=1)[:,None]
         
-        Signal = np.average(Values, axis=1)
+        try:
+            Signal = np.average(Values, axis=1)
+        except:
+            print(Neurons)
+            print(Indices)
+            print(Values)
         
         return Signal
         

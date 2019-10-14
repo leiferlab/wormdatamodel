@@ -8,7 +8,7 @@ _legacy_c = Extension('wormdatamodel.data._legacy_c',
                     include_dirs = [
                         numpy.get_include()
                         ],
-                    extra_compile_args=['-O3'])#
+                    extra_compile_args=['-O3','-D_FILE_OFFSET_BITS=64'])#
 
 setup(name='wormdatamodel',
       version='1.0',
