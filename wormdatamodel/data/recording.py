@@ -264,23 +264,26 @@ class recording:
             except:
                 pass
                 
-        # Use the derivative of Z to determine the volumeDirection, instead of
-        # the output of the differentiator. The latter has some problems...
-        # Maybe you should change the 
-        if self.legacy:
-            print("Using the derivative of Z to determine the volume direction and the volume index, instead of the output of the differentiator. (Legacy)")
-            self.volumeDirection[:-1] = np.sign(np.diff(self.Z))
-            self.volumeDirection[-1] = self.volumeDirection[-2]
-            self.volumeDirection = (-self.volumeDirection+1)//2
-            volumeIndex = np.cumsum(np.absolute(np.diff(self.volumeDirection)))
-       
         # Interpolate missing values for Z and volumeDirection
         # TODO This however, assumes that there are no gaps in frameCount
         nans, x = np.isnan(self.Z), lambda z: z.nonzero()[0]
         self.Z[nans]= np.interp(x(nans), x(~nans), self.Z[~nans])
         self.volumeDirection[nans] = np.interp(x(nans), x(~nans), self.volumeDirection[~nans]).astype(np.int8)
         
-        
+        # Use the derivative of Z to determine the volumeDirection, instead of
+        # the output of the differentiator. The latter has some problems...
+        # Maybe you should change the 
+        if self.legacy:
+            print("Using the derivative of Z to determine the volume direction and the volume index, instead of the output of the differentiator. (Legacy)")
+            smn=4
+            sm = np.ones(smn)/smn
+            Z_sm = np.copy(self.Z)
+            Z_sm = np.convolve(self.Z,sm,mode="same")
+            self.volumeDirection[:-1] = np.sign(np.diff(Z_sm))
+            self.volumeDirection[-1] = self.volumeDirection[-2]
+            self.volumeDirection = (-self.volumeDirection+1)//2
+            volumeIndex = np.cumsum(np.absolute(np.diff(self.volumeDirection)))
+            
         # Get the first frame of each volume as indexes in the list of frames 
         # that have been saved, regardless of dropped frames, so that you can
         # use these directly to load the files. frameTime, the absolute 
@@ -292,10 +295,13 @@ class recording:
         # Get the details about the Z scan. The values in the DAQ file are in V.
         # The file contains also the etlCalibrationMindpt and Maxdpt, which 
         # correspond to the diopters corresponding to 0 and 5 V, respectively.
-        fz = open(self.foldername+self.filenameZDetails)
-        zDetails = json.load(fz)
-        fz.close()
-        zUmOverV = 1./zDetails["V/um"]
+        try:
+            fz = open(self.foldername+self.filenameZDetails)
+            zDetails = json.load(fz)
+            fz.close()
+            zUmOverV = 1./zDetails["V/um"]
+        except:
+            zUmOverV = 1./0.05
         
         # Build the list ZZ of Z split in different volumes
         self.ZZ = []
