@@ -1,10 +1,11 @@
 import numpy as np
 import scipy.io as sio
 import pygmmreg as pyg
+import matplotlib.pyplot as plt
 
-filename = "/tigress/LEIFER/francesco/pumpprobe/immobilizationtest/REDGREEN_objectivesregistration_20190717_094840/"
+foldername = "/tigress/LEIFER/francesco/pumpprobe/immobilizationtest/REDGREEN_objectivesregistration_20190717_094840/"
 
-def redToGreen(Cervelli_R, filename=filename):
+def redToGreen(Cervelli_R, source="LabView", folder=foldername):
     '''
     Transforms coordinates from the red to the green part of the image. The
     transformation is purely 2D, the z coordinates are untouched.
@@ -22,7 +23,8 @@ def redToGreen(Cervelli_R, filename=filename):
     '''
 
     ## Load tps transformation pre-computed from LabView
-    Ctrl, Param, normParam, denormParam = pyg.loadParam(filename, source="LabView", filenamebase="redGreenRegistration")
+    Ctrl, Param, normParam, denormParam = pyg.loadParam(
+            folder, source=source, filenamebase="redGreenRegistration")
 
     ## Get an array [[x,y,-1],...] to do the 2D transformation
     # The -1 comes from the fact that the transformation was fitted in LabView
@@ -48,10 +50,13 @@ def redToGreen(Cervelli_R, filename=filename):
     
     return Cervelli_G
     
-def genRedToGreen(folder):
+def genRedToGreen(folder, plot=False):
     '''Generates the files containing the parameters and the control points
     defining the transformation from red to green, starting from the 
     alignments.mat file from the old pipeline.
+    
+    Note: In the .mat file, the first array loaded has to be the Scene, the 
+    second the Model. XY are inverted.
     
     Parameters
     ----------
@@ -63,19 +68,23 @@ def genRedToGreen(folder):
     
     if folder[-1]!="/":folder+="/"
     cont=sio.loadmat(folder+"alignments.mat")
-
+    
+    '''
     A = cont['alignments'][0][0][1][0][0][2]
     B = cont['alignments'][0][0][1][0][0][3]
-
+    '''
+    B = cont['alignments'][0][0][1][0][0][2]
+    A = cont['alignments'][0][0][1][0][0][3]
+    
     Scale = np.array([0.8,0.5,0.3])
     nscale = len(Scale)
     L = np.zeros_like(Scale)
 
     Model = np.ones((A.shape[0],A.shape[1]+1))*(-1.0)
     Scene = np.ones((B.shape[0],B.shape[1]+1))*(-1.0)
-    Model[:,0:2] = A
+    Model[:,0:2] = A[:,::-1]
     Model[:,2] = -1.0
-    Scene[:,0:2] = B
+    Scene[:,0:2] = B[:,::-1]
     Scene[:,2] = -1.0
     Ctrl = np.copy(Model)
 
@@ -94,3 +103,8 @@ def genRedToGreen(folder):
     Out = np.zeros((M,D))
     pyg.register(D,Param,L,nscale,Scale,N,Ctrl,M,Model,S,Scene,M,Out,normParams,denormParams)
     pyg.saveParam(folder,Ctrl,Param,normParams,denormParams)
+    
+    if plot:
+        plt.plot(Out.T[0],Out.T[1],'o')
+        plt.plot(Scene.T[0],Scene.T[1],'o')
+        plt.show()
