@@ -181,7 +181,7 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
             ])
         
         # Generate indices based on box
-        Indices = _generate_box_indices(Neurons, Box=Box)
+        Indices = _generate_box_indices(Neurons, Box=Box, shape=Frames.shape)
         
         # Extract the values for each pixel
         Values = _slice_array(Frames,Indices).astype(np.float)
