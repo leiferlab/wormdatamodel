@@ -23,3 +23,6 @@ Among others, useful properties and methods of the class are:
 - recording.ZZ is a list of numpy arrays with the z coordinate of the frames in each volume. 
 - recording.\_get_memoryUsagePerVolume() returns an estimate of the memory generally used to store and process one volume (useful to limit the amount of data loaded to the available RAM)
 - recoring.free_memory() deletes the frames.
+
+## Authors
+Francesco Randi @ Leifer Lab, Princeton Physics
