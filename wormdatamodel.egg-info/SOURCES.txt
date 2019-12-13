@@ -1,0 +1,16 @@
+README.md
+setup.py
+wormdatamodel/__init__.py
+wormdatamodel.egg-info/PKG-INFO
+wormdatamodel.egg-info/SOURCES.txt
+wormdatamodel.egg-info/dependency_links.txt
+wormdatamodel.egg-info/top_level.txt
+wormdatamodel/data/__init__.py
+wormdatamodel/data/_legacy_c.cpp
+wormdatamodel/data/recording.py
+wormdatamodel/data/redtogreen.py
+wormdatamodel/data/volume.py
+wormdatamodel/signal/__init__.py
+wormdatamodel/signal/extraction.py
+wormdatamodel/signal/file.py
+wormdatamodel/signal/signal.py
