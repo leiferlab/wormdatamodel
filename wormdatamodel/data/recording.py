@@ -223,10 +223,19 @@ class recording:
         '''
         Load extra information recorded.
         '''
+        # Load the details of the frames that are downloaded from the camera
+        # together with the frames: for each frame in the sequence of saved
+        # frames there is one entry in this file containing its absolute count
+        # from the beginning of the acquisition (not the saving) and its 
+        # timestamp.
         framesDetails = np.loadtxt(self.foldername+self.filenameFramesDetails,skiprows=1).T
         frameTime = framesDetails[0]
         frameCount = framesDetails[1].astype(int)
-
+        
+        # Load the details of the frames that are acquired synchrounously to
+        # the camera triggers. Each entry contains the value of the counter 
+        # counting the triggers (framesCountDAQ), corresponding to the absolute
+        # count downloaded from the camera.
         frameSync = np.loadtxt(self.foldername+self.filenameOtherFrameSynchronous,skiprows=1).T
         frameCountDAQ = frameSync[0].astype(int)
         latencyShift = 0
@@ -251,24 +260,33 @@ class recording:
         
         # Get the volume to which each frame in FrameDetails belongs from the DAQ data
         volumeIndex = np.ones_like(frameCount)*(-10)
-        self.volumeDirection = np.empty(len(frameCount),dtype=np.int8)
+        self.volumeDirection = np.empty(len(frameCount),dtype=np.float)#FIXME,dtype=np.int8)
         self.volumeDirection[:] = np.nan
         self.Z = np.empty(len(frameCount),dtype=np.float)
         self.Z[:] = np.nan
         for i in np.arange(len(frameCount)):
             try:
+                # Find the index of the entry in the camera-trigger-synchronous
+                # data that corresponds to the absolute count frameCount[i].
                 indexInDAQ = np.where(frameCountDAQ == frameCount[i])
+                # Extract the information from that entry.
                 volumeIndex[i] = volumeIndexDAQ[indexInDAQ]
                 self.Z[i] = ZDAQ[indexInDAQ]
                 self.volumeDirection[i] = (volumeDirectionDAQ[indexInDAQ]+1)//2
             except:
+                # If there is no matching saved frame (dropped), pass and leave
+                # nan entries. They will be interpolated below.
                 pass
                 
         # Interpolate missing values for Z and volumeDirection
-        # TODO This however, assumes that there are no gaps in frameCount
+        # If there are gaps in frameCount (dropped frames) inside the volumes,  
+        # the interpolation of the Z will produce steeper regions, that remain,
+        # however, locally monotonic. If the gaps are at the volume boundaries,
+        # this will move the change of sign of the derivative into one of the
+        # neighboring volumes.
         nans, x = np.isnan(self.Z), lambda z: z.nonzero()[0]
         self.Z[nans]= np.interp(x(nans), x(~nans), self.Z[~nans])
-        self.volumeDirection[nans] = np.interp(x(nans), x(~nans), self.volumeDirection[~nans]).astype(np.int8)
+        self.volumeDirection[nans] = np.interp(x(nans), x(~nans), self.volumeDirection[~nans]).astype(np.float)#FIXME astype(np.int8)
         
         # Use the derivative of Z to determine the volumeDirection, instead of
         # the output of the differentiator. The latter has some problems...
@@ -278,18 +296,21 @@ class recording:
             smn=4
             sm = np.ones(smn)/smn
             Z_sm = np.copy(self.Z)
-            Z_sm = np.convolve(self.Z,sm,mode="same")
+            #FIXME Z_sm = np.convolve(self.Z,sm,mode="same")
             self.volumeDirection[:-1] = np.sign(np.diff(Z_sm))
             self.volumeDirection[-1] = self.volumeDirection[-2]
             self.volumeDirection = (-self.volumeDirection+1)//2
-            volumeIndex = np.cumsum(np.absolute(np.diff(self.volumeDirection)))
+            volumeIndex[1:] = np.cumsum(np.absolute(np.diff(self.volumeDirection)))
+            volumeIndex[0] = volumeIndex[1]
+
+        self.volumeIndex = volumeIndex
             
         # Get the first frame of each volume as indexes in the list of frames 
         # that have been saved, regardless of dropped frames, so that you can
         # use these directly to load the files. frameTime, the absolute 
         # frameCount, and volumeIndex (not volumeIndexDAQ) can be indexed using
         # self.volumeFirstFrame.
-        self.volumeFirstFrame = np.where(np.diff(volumeIndex)==1)[0] 
+        self.volumeFirstFrame = np.where(np.diff(volumeIndex)==1)[0]+1
         self.nVolume = len(self.volumeFirstFrame)-2
         
         # Get the details about the Z scan. The values in the DAQ file are in V.
