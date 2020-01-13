@@ -43,7 +43,7 @@ class recording:
     filenameZDetails = "zScan.json"
     filenameOptogeneticsTwoPhoton = "pharosTriggers.txt"
     
-    def __init__(self, foldername, legacy=False, rectype="3d"):
+    def __init__(self, foldername, legacy=False, rectype="3d", settings={}):
         '''
         Class constructor: Do not load all the data from the constructor, so 
         that the class can be used also in a light-weight mode.
@@ -56,6 +56,10 @@ class recording:
         
         self.legacy = legacy
         self.rectype = rectype
+        try:
+            self.latencyShift = settings["latencyShift"]
+        except:
+            self.latencyShift = 0
         
         # Load extra information
         self.load_extra()
@@ -198,15 +202,16 @@ class recording:
         image is stored line0R,line0G,line1R,line1G,...
         '''
         
-        #self.file.close()
-        self.frame = 3*np.ones(frameN*self.frameSize, dtype=np.uint16).reshape( #TODO TODO TODO TODO TODO TODO
-                                        frameN,self.channelN,
-                                        self.channelSizeY,self.channelSizeX)
+        # Pre-allocate the memory for the frames          
+        self.frame = np.empty((frameN,self.channelN,
+                               self.channelSizeY,self.channelSizeX),
+                               dtype=np.uint16)
+        # Load                       
         wormdm.data.load_frames_legacy(self.foldername+self.filenameFrames, 
                                    (np.int32)(startFrame), (np.int32)(frameN), 
-                                   (np.int32)(self.channelSizeX), (np.int32)(self.channelSizeY),
+                                   (np.int32)(self.channelSizeX), 
+                                   (np.int32)(self.channelSizeY),
                                    self.frame)
-        #self.file = open(self.foldername+self.filenameFrames, 'br')
         
         self.frameLastLoaded = startFrame+frameN
         
@@ -238,10 +243,10 @@ class recording:
         # count downloaded from the camera.
         frameSync = np.loadtxt(self.foldername+self.filenameOtherFrameSynchronous,skiprows=1).T
         frameCountDAQ = frameSync[0].astype(int)
-        latencyShift = 0
-        if latencyShift!=0:
-            frameCountDAQ += latencyShift
-            print("Applying latency shift "+str(latencyShift))
+        #latencyShift = 0
+        if self.latencyShift!=0:
+            frameCountDAQ += self.latencyShift
+            print("Applying latency shift: "+str(self.latencyShift)+" frames.")
         volumeIndexDAQ = frameSync[3].astype(int)
         volumeDirectionDAQ = frameSync[2].astype(int)
         ZDAQ = frameSync[1]
@@ -256,7 +261,7 @@ class recording:
             if(dframeCount[i]==0 and dframeCount[i-1]==2):
                 frameCountCorr[i] -= 1
 
-        frameCount = frameCountCorr
+        self.frameCount = frameCountCorr
         
         # Get the volume to which each frame in FrameDetails belongs from the DAQ data
         volumeIndex = np.ones_like(frameCount)*(-10)
