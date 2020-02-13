@@ -77,7 +77,7 @@ static PyObject *load_frames_legacy(PyObject *self, PyObject *args) {
     
     // This is weird, but I haven't managed to understand how to correctly
     // support large files.
-    for(int j=0;j<startFrame;j++){
+    for(int32_t j=0;j<startFrame;j++){
         file.seekg(2*channelsize_char,std::ios::cur);
     }
     
@@ -86,24 +86,12 @@ static PyObject *load_frames_legacy(PyObject *self, PyObject *args) {
     memblock_r = (char*)frames;
     memblock_g = (char*)frames + channelsize_char;
     
-    int32_t frameidx;
     // For each frame
     for(int i=0;i<frameN;i++){
-        frameidx = i + startFrame;
         // For each full row
         for(int n=0;n<rowN;n++){
             // Copy the first half of the row (red).
-            // Move absolute: this does not work because the numbers become
-            // too large for in32_t!
-            //memblock = (char*)frames + 2*i*channelsize_char + n*rowsize_char;
-            //file.seekg(2*frameidx*channelsize_char+2*n*rowsize_char, std::ios::beg);
             file.read(memblock_r, rowsize_char);
-            // Move the pointer a frame (i.e. channel, half of the full frame
-            // for each time) forward.
-            // Move absolute: this does not work because the numbers become
-            // too large for in32_t!
-            //memblock = (char*)frames + (2*i+1)*channelsize_char + n*rowsize_char;
-            //file.seekg(2*frameidx*channelsize_char+(2*n+1)*rowsize_char, std::ios::beg);
             // Read the second half row (green).
             file.read(memblock_g, rowsize_char);
             // If you're not at the end of the allocated frames, move one full
@@ -113,6 +101,9 @@ static PyObject *load_frames_legacy(PyObject *self, PyObject *args) {
                 memblock_g = memblock_g + rowsize_char;
             }
         }
+        // If you're not at the end of the allocated frames, for each of the
+        // two pointers (red, green) skip the other channel of the frame (green,
+        // red).
         if(i<(frameN-1)){
             memblock_r = memblock_r + channelsize_char;
             memblock_g = memblock_g + channelsize_char;
