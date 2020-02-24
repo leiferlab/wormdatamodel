@@ -32,3 +32,16 @@ def from_file(folder, filename):
     Signal = np.loadtxt(folder+filename)
     
     return Signal, info
+    
+def from_file_info(folder, filename):
+    if folder[-1]!="/": folder+="/"
+    
+    f = open(folder+filename,"r")
+    l = f.readline()
+    f.close()
+    try:
+        info = json.loads(l[2:])
+    except:
+        info = {}
+        
+    return info

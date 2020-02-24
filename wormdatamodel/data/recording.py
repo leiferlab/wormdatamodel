@@ -43,7 +43,7 @@ class recording:
     filenameZDetails = "zScan.json"
     filenameOptogeneticsTwoPhoton = "pharosTriggers.txt"
     
-    def __init__(self, foldername, legacy=False, rectype="3d", settings={}):
+    def __init__(self, foldername, legacy=False, rectype=None, settings={}):
         '''
         Class constructor: Do not load all the data from the constructor, so 
         that the class can be used also in a light-weight mode.
@@ -55,7 +55,17 @@ class recording:
         self.filename = self.foldername+self.filenameFrames
         
         self.legacy = legacy
-        self.rectype = rectype
+        
+        if rectype == None:
+            if os.path.isfile(foldername+self.filenameZDetails): 
+                self.rectype = "3d"
+            else:
+                self.rectype = "2d"
+            print("Assuming it is a "+self.rectype+" recording.")
+        else:
+            self.rectype = rectype
+            
+            
         try:
             self.latencyShift = settings["latencyShift"]
         except:
@@ -138,8 +148,12 @@ class recording:
         # cannot. The simple version is to get a single lock on everything.
         #self.frameBufferLocks = np.zeros(self.frameBufferSize, dtype=np.bool)
         
-    def _load_2d(self, startFrame=0, stopFrame=-1, jobMaxMemory=100*2**30):
-               
+    def _load_2d(self, startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, jobMaxMemory=100*2**30):
+        
+        if nVolume != -1:
+            startFrame = startVolume
+            stopFrame = startFrame + nVolume
+             
         if stopFrame==-1: 
             # Calculate number of frames contained in the file and subtract 
             # initial frames skipped
@@ -347,6 +361,7 @@ class recording:
         framesDetails = np.loadtxt(self.foldername+self.filenameFramesDetails,skiprows=1).T
         self.T = framesDetails[0]
         self.frameCount = framesDetails[1].astype(int)
+        self.nVolume = self.frameCount.shape[0]
         
         
     def load_optogenetics(self):
@@ -425,6 +440,48 @@ class recording:
                          
         return vol
         
+    def get_events(self, shift=0):
+        events = {}
+        
+        # OPTOGENETICS
+        I = self.optogeneticsFrameCount.shape[0]
+        
+        # Find the closest frame to the trigger event, in case the exact one
+        # has been dropped.
+        index = np.zeros(I,dtype=np.int32)
+        for i in np.arange(I):
+            d = np.absolute(self.optogeneticsFrameCount[i]+shift-self.frameCount)
+            index[i] = np.argmin(d)
+            
+        if self.rectype == "3d":
+            index = self.volumeIndex[index]
+            
+        ampl_indices = np.zeros(len(index)+2)
+        ampl_indices[1:-1] = index
+        ampl_indices[-1] = self.nVolume
+        strides = np.diff(ampl_indices)
+            
+        properties = {
+            'type': 'twophoton',
+            'n_pulses': self.optogeneticsNPulses,
+            'rep_rate_divider': self.optogeneticsRepRateDivider,
+            'target': np.array([
+                self.optogeneticsTargetX,
+                self.optogeneticsTargetY,
+                self.optogeneticsTargetZ
+                ]).T,
+            'target_xy_space': self.optogeneticsTargetXYSpace,
+            'target_z_space': self.optogeneticsTargetZSpace,
+            'target_z_device': self.optogeneticsTargetZDevice,
+            'time': self.optogeneticsTime
+            }
+        
+         
+        events['optogenetics'] = {'index': index, 
+                                  'strides': strides,
+                                  'properties': properties}
+        
+        return events
         
     
     ## SOME FUNCTIONS FOR FUTURE IMPLEMENTATION

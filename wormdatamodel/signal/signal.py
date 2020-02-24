@@ -65,7 +65,10 @@ class Signal:
             # nans: location of nans
             # x: function that finds the non-zero entries
             nans, x = self.nan_mask[:,i], lambda z: z.nonzero()[0]
-            interpolated[nans,i] = np.interp(x(nans), x(~nans), self.data[~nans,i])
+            try:
+                interpolated[nans,i] = np.interp(x(nans), x(~nans), self.data[~nans,i])
+            except:
+                pass
         
         return interpolated
     
