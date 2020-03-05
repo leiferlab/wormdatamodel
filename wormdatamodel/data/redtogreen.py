@@ -36,7 +36,7 @@ def redToGreen(Cervelli_R, source="LabView", folder=foldername):
 
     # Flip zyx to xyz, and set all the z to -1 for the 2D transformation
     # Copy just coord to avoid passing weird stuff to the C code
-    Points = np.copy(Cervelli_G.coord[:,::-1].astype(np.float)) 
+    Points = np.copy(Cervelli_G[:,::-1].astype(np.float)) 
     Points[:,0:2] = Points[:,0:2]
     Points[:,2] = -1.0
 
