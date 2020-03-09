@@ -52,6 +52,12 @@ class Signal:
     def from_file(cls,folder,filename,*args,**kwargs):
         # read in data; rows = time, columns = neuron
         data, info = wormdm.signal.from_file(folder,filename)
+        # adjusting the shape so that even if only one neuron, still has "columns"
+        try:
+            data.shape[1]
+            
+        except:
+            data = np.copy(np.reshape(data,(data.shape[0],1)))
         
         return cls(data,info,*args,**kwargs)
     
