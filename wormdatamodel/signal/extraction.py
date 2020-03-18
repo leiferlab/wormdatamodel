@@ -157,13 +157,13 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         
         # Reshape, multiply by weights and sum values in each box
         Values = Values.reshape((nNeuron,nElements))-framePixelOffset
-        # <FIXME>
+        '''# <FIXME>
         weights2 = np.max(weights,axis=1)[:,None]-weights
         wValues = Values*weights2
         wValues /= np.sum(weights2,axis=1)[:,None]
-        # </FIXME>
-        #wValues = Values*weights
-        #wValues /= np.sum(weights,axis=1)[:,None]
+        # </FIXME>'''
+        wValues = Values*weights
+        wValues /= np.sum(weights,axis=1)[:,None]
         
         try:
             Signal = np.average(Values, axis=1)
@@ -196,7 +196,7 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         wValues = Values*weights
         wValues /= np.sum(weights,axis=1)[:,None]
         
-        Signal = np.average(Values, axis=1)
+        Signal = np.average(Values, axis=1) 
         
         return Signal
         

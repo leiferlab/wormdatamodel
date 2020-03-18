@@ -248,7 +248,9 @@ class recording:
         # from the beginning of the acquisition (not the saving) and its 
         # timestamp.
         framesDetails = np.loadtxt(self.foldername+self.filenameFramesDetails,skiprows=1).T
-        frameTime = framesDetails[0]
+        self.frameTime = framesDetails[0]
+        a, b = np.unique(np.diff(self.frameTime), return_counts=True)
+        self.dt = round(a[np.argmax(b)],3)
         frameCount = framesDetails[1].astype(int)
         
         # Load the details of the frames that are acquired synchrounously to
@@ -360,6 +362,8 @@ class recording:
     def _load_extra_2d(self):
         framesDetails = np.loadtxt(self.foldername+self.filenameFramesDetails,skiprows=1).T
         self.T = framesDetails[0]
+        a, b = np.unique(np.diff(self.T), return_counts=True)
+        self.dt = round(a[np.argmax(b)],3)
         self.frameCount = framesDetails[1].astype(int)
         self.nVolume = self.frameCount.shape[0]
         
