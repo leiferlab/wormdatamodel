@@ -3,6 +3,8 @@ Module implementing a data model for the whole brain recordings (more broadly, o
 
 Data from any source can be fed in the rest of the libraries and modules, provided that an interface exposing the same methods and variables as the wormbrain.data.recording class.
 
+For more extensive documentation, see docs/wormdatamodel/index.html .
+
 ## Installation
 To install the module, use (with `python` an alias for python3)
 ```
