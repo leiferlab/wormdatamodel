@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.3" />
+<title>wormdatamodel.signal.extraction API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>wormdatamodel.signal.extraction</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import numpy as np
+
+def _generate_box_indices(Centers, box_size=(1,3,3), Box=np.array([]), 
+                          shape=[None,None,None]):
+    &#39;&#39;&#39;
+    Generate indices for slicing of an array to extract boxes/windows of given
+    size centered on Centers.
+    
+    Parameters
+    ----------
+    Centers: np.array of integers
+        Centers[center_index, coordinate]. Coordinates are in slicing order, not
+        plotting order (i.e. z,y,x for volumetric images).
+    
+    box_size: list of odd integers
+        Size of the boxes centered on each Center[i]. Again, coordinates are in
+        slicing order.
+    &#39;&#39;&#39;
+    
+    nCenters = Centers.shape[0]
+    nCoord = Centers.shape[1]
+    
+    if Box.shape[0]==0:
+        box_size = np.array(box_size)
+        nElements = np.prod(box_size)
+        if np.all(box_size==np.array([3,5,5])):
+            Box = np.array([
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2],
+                    [-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2]
+                          ])
+        elif np.all(box_size==np.array([3,3,3])):
+            Box = np.array([
+                    [-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1],
+                    [-1,-1,-1,0,0,0,1,1,1,-1,-1,-1,0,0,0,1,1,1,-1,-1,-1,0,0,0,1,1,1],
+                    [-1,0,1,-1,0,1,-1,0,1,-1,0,1,-1,0,1,-1,0,1,-1,0,1,-1,0,1,-1,0,1]
+                    ])
+        elif np.all(box_size==np.array([1,5,5])):
+            Box = np.array([
+                    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                    [-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2],
+                    [-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2]
+                  ])
+        elif np.all(box_size==np.array([1,3,3])):
+            Box = np.array([
+                    [0,0,0,0,0,0,0,0,0],
+                    [-1,-1,-1,0,0,0,1,1,1],
+                    [-1,0,1,-1,0,1,-1,0,1]
+                  ])
+        elif np.all(box_size==np.array([2,3,3])):
+            Box = np.array([
+                    [0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1],
+                    [-1,-1,-1,0,0,0,1,1,1,-1,-1,-1,0,0,0,1,1,1],
+                    [-1,0,1,-1,0,1,-1,0,1,-1,0,1,-1,0,1,-1,0,1]
+                  ])
+        elif np.all(box_size==np.array([1,1,1])):
+            Box = np.array([[0],[0],[0]])
+        elif np.all(box_size==np.array([3,3])):
+            Box = np.array([
+                    [-1,-1,-1,0,0,0,1,1,1],
+                    [-1,0,1,-1,0,1,-1,0,1]
+                  ])
+        else:
+            print(&#34;Box not implemented. see pp.signal._generate_box_indices&#34;)
+            quit()
+    else:
+        nElements = Box.shape[1]
+        
+        
+    &#39;&#39;&#39;#It was
+    Centers_rep = np.repeat(Centers,nElements,axis=0).T.reshape((nCenters,nCoord,nElements))
+    for coord in np.arange(nCoord):
+        #This was the original one, but it&#39;s something weird (compare it with the reshaped shape above
+        #Centers_rep[coord] += Box[coord]
+    Indices = Centers_rep.reshape((nCoord,nCenters*nElements))
+    &#39;&#39;&#39;
+    
+    Centers_rep = np.repeat(Centers,nElements,axis=0).T.reshape((nCoord,nCenters,nElements))
+    
+    for coord in np.arange(nCoord):
+        Centers_rep += Box[:,None,:]
+    
+    Indices = Centers_rep.reshape((nCoord,nCenters*nElements))
+    for q in np.arange(len(shape)):
+        np.clip(Indices[q],0,shape[q]-1,Indices[q])
+    
+    return Indices
+    
+def _slice_array(Array, Indices):
+    if len(Array.shape)==2:
+        return Array[Indices[0],Indices[1]]
+    elif len(Array.shape)==3:
+        return Array[Indices[0],Indices[1],Indices[2]]
+    
+def extract(Frames, Neurons, method=&#34;box&#34;, framePixelOffset=0, **kwargs):
+    &#39;&#39;&#39;Extracts the intensities in Frames at the position specified by Neurons.
+    
+    Parameters
+    ----------
+    Frames: numpy array
+        Frames[z,y,x] images. Pass an already-sliced array if there are multiple
+        channels. E.g., if you have Frames[z,ch,y,x], pass Frames[:,ch,...]
+    Neurons: numpy array
+        Neurons[n] zyx position at which to extract the intensity for neuron n.
+    method: string, optional
+        Method used to extract the intensities. Default: box.
+    framePixelOffset: float, optional
+        Offset of the pixel intensities possibly set by the camera. For the 
+        Hamamatsu ORCA Flash it is approximately 100 for each pixel in the bin.
+        Subtracted only here to avoid problems with integer arithmetic or 
+        unnecessary conversions to float. Default: 0
+    
+    Returns
+    -------
+    Signal: numpy array
+        Signal[n] gives the intensity of the neuron n.
+    &#39;&#39;&#39;
+    nNeuron = Neurons.shape[0]
+    nCoord = Neurons.shape[1]
+    
+    if method==&#34;box&#34;:
+        box_size = kwargs[&#39;box_size&#39;]
+        nElements = np.prod(box_size)
+        
+        if len(box_size)!=nCoord:
+            print(&#34;Number of coordinates in Neuron coordinate and box_size &#34;+\
+                &#34;don&#39;t match.&#34;)
+            quit()
+
+        # Generate indices for all the pixels in the boxes surrounding each neuron
+        Indices = _generate_box_indices(Neurons, box_size, shape=Frames.shape)
+        
+        # Extract the values for each pixel
+        Values = _slice_array(Frames,Indices).astype(np.float)-framePixelOffset
+        
+        # Reshape and sum values in each box
+        Values = Values.reshape((nNeuron,nElements))
+        Signal = np.average(Values, axis=1)
+    
+        return Signal
+    elif method==&#34;weightedMask&#34;:
+        weights = kwargs[&#39;weights&#39;]
+        
+        #hard coded indices - curvature extraction in neuronsegmentation-c
+        nElements = 51
+        Box = np.array([
+            [-3,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,3],
+            [0, -1,0,0,0,1, -2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2, -2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2, -2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2, -1,0,0,0,1, 0],
+            [0,  0,1,0,1,0,  0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0,  0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0,  0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0,  0,1,0,1,0, 0]
+            ])
+        
+        # Generate indices based on box
+        Indices = _generate_box_indices(Neurons, Box=Box, shape=Frames.shape)
+        
+        # Extract the values for each pixel
+        Values = _slice_array(Frames,Indices).astype(np.float)
+        
+        # Reshape, multiply by weights and sum values in each box
+        Values = Values.reshape((nNeuron,nElements))-framePixelOffset
+        &#39;&#39;&#39;# &lt;FIXME&gt;
+        weights2 = np.max(weights,axis=1)[:,None]-weights
+        wValues = Values*weights2
+        wValues /= np.sum(weights2,axis=1)[:,None]
+        # &lt;/FIXME&gt;&#39;&#39;&#39;
+        wValues = Values*weights
+        wValues /= np.sum(weights,axis=1)[:,None]
+        
+        try:
+            Signal = np.average(Values, axis=1)
+        except:
+            print(Neurons)
+            print(Indices)
+            print(Values)
+        
+        return Signal
+        
+    elif method==&#34;weightedMask2d&#34;:
+        weights = kwargs[&#39;weights&#39;]
+        
+        #hard coded indices - curvature extraction in neuronsegmentation-c
+        nElements = 13
+        Box = np.array([
+            [0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [-2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2],
+            [0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0]
+            ])
+        
+        # Generate indices based on box
+        Indices = _generate_box_indices(Neurons, Box=Box, shape=Frames.shape)
+        
+        # Extract the values for each pixel
+        Values = _slice_array(Frames,Indices).astype(np.float)
+        
+        # Reshape, multiply by weights and sum values in each box
+        Values = Values.reshape((nNeuron,nElements))-framePixelOffset
+        wValues = Values*weights
+        wValues /= np.sum(weights,axis=1)[:,None]
+        
+        Signal = np.average(Values, axis=1) 
+        
+        return Signal
+        
+    elif method==&#34;fitSphere&#34;:
+        # Doesn&#39;t really seem to help. Dropping it right now..
+        
+        # Right now this is fixed, it cannot be chosen
+        box_size = (2,3,3)
+        nElements = np.prod(box_size)
+        
+        # Generate indices based on box
+        Indices = _generate_box_indices(Neurons, box_size)
+        
+        # Extract the values for each pixel, reshape, subtract camera offset
+        Values = _slice_array(Frames,Indices).astype(np.float)
+        Values = Values.reshape((nNeuron,nElements))-framePixelOffset
+        
+        # Calculate average signal at central plane and next one, to be used
+        # to extract the radius of the neuron. Normalize them
+        Y = np.empty((Values.shape[0],2))
+        Y[:,0] = np.average(Values[:,0:9],axis=-1)
+        Y[:,1] = np.average(Values[:,9:],axis=-1)
+        
+        Y[:,0] /= Y[:,0]
+        Y[:,1] /= Y[:,1]
+        
+        # Calculate the radius of the neuron
+        R = _sphere_radius(Y)
+        
+        # Extract signal and multiply by the radius
+        Signal = np.average(Values[:,0:9], axis=1)*R
+        
+        return Signal
+    
+    else:
+        print(&#34;Signal extraction method not implemented. See pp.signal.extract&#34;)
+        quit()    
+        
+def _sphere_radius(y, dx=1.0):
+    y0sq = y[:,0]**2
+    return np.sqrt(y0sq + ((y0sq-y[:,1]**2-dx**2)/(2.0*dx))**2)
+            </code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="wormdatamodel.signal.extraction.extract"><code class="name flex">
+<span>def <span class="ident">extract</span></span>(<span>Frames, Neurons, method='box', framePixelOffset=0, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Extracts the intensities in Frames at the position specified by Neurons.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>Frames</code></strong> :&ensp;<code>numpy array</code></dt>
+<dd>Frames[z,y,x] images. Pass an already-sliced array if there are multiple
+channels. E.g., if you have Frames[z,ch,y,x], pass Frames[:,ch,&hellip;]</dd>
+<dt><strong><code>Neurons</code></strong> :&ensp;<code>numpy array</code></dt>
+<dd>Neurons[n] zyx position at which to extract the intensity for neuron n.</dd>
+<dt><strong><code>method</code></strong> :&ensp;<code>string</code>, optional</dt>
+<dd>Method used to extract the intensities. Default: box.</dd>
+<dt><strong><code>framePixelOffset</code></strong> :&ensp;<code>float</code>, optional</dt>
+<dd>Offset of the pixel intensities possibly set by the camera. For the
+Hamamatsu ORCA Flash it is approximately 100 for each pixel in the bin.
+Subtracted only here to avoid problems with integer arithmetic or
+unnecessary conversions to float. Default: 0</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>Signal</code></strong> :&ensp;<code>numpy array</code></dt>
+<dd>Signal[n] gives the intensity of the neuron n.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def extract(Frames, Neurons, method=&#34;box&#34;, framePixelOffset=0, **kwargs):
+    &#39;&#39;&#39;Extracts the intensities in Frames at the position specified by Neurons.
+    
+    Parameters
+    ----------
+    Frames: numpy array
+        Frames[z,y,x] images. Pass an already-sliced array if there are multiple
+        channels. E.g., if you have Frames[z,ch,y,x], pass Frames[:,ch,...]
+    Neurons: numpy array
+        Neurons[n] zyx position at which to extract the intensity for neuron n.
+    method: string, optional
+        Method used to extract the intensities. Default: box.
+    framePixelOffset: float, optional
+        Offset of the pixel intensities possibly set by the camera. For the 
+        Hamamatsu ORCA Flash it is approximately 100 for each pixel in the bin.
+        Subtracted only here to avoid problems with integer arithmetic or 
+        unnecessary conversions to float. Default: 0
+    
+    Returns
+    -------
+    Signal: numpy array
+        Signal[n] gives the intensity of the neuron n.
+    &#39;&#39;&#39;
+    nNeuron = Neurons.shape[0]
+    nCoord = Neurons.shape[1]
+    
+    if method==&#34;box&#34;:
+        box_size = kwargs[&#39;box_size&#39;]
+        nElements = np.prod(box_size)
+        
+        if len(box_size)!=nCoord:
+            print(&#34;Number of coordinates in Neuron coordinate and box_size &#34;+\
+                &#34;don&#39;t match.&#34;)
+            quit()
+
+        # Generate indices for all the pixels in the boxes surrounding each neuron
+        Indices = _generate_box_indices(Neurons, box_size, shape=Frames.shape)
+        
+        # Extract the values for each pixel
+        Values = _slice_array(Frames,Indices).astype(np.float)-framePixelOffset
+        
+        # Reshape and sum values in each box
+        Values = Values.reshape((nNeuron,nElements))
+        Signal = np.average(Values, axis=1)
+    
+        return Signal
+    elif method==&#34;weightedMask&#34;:
+        weights = kwargs[&#39;weights&#39;]
+        
+        #hard coded indices - curvature extraction in neuronsegmentation-c
+        nElements = 51
+        Box = np.array([
+            [-3,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,3],
+            [0, -1,0,0,0,1, -2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2, -2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2, -2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2, -1,0,0,0,1, 0],
+            [0,  0,1,0,1,0,  0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0,  0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0,  0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0,  0,1,0,1,0, 0]
+            ])
+        
+        # Generate indices based on box
+        Indices = _generate_box_indices(Neurons, Box=Box, shape=Frames.shape)
+        
+        # Extract the values for each pixel
+        Values = _slice_array(Frames,Indices).astype(np.float)
+        
+        # Reshape, multiply by weights and sum values in each box
+        Values = Values.reshape((nNeuron,nElements))-framePixelOffset
+        &#39;&#39;&#39;# &lt;FIXME&gt;
+        weights2 = np.max(weights,axis=1)[:,None]-weights
+        wValues = Values*weights2
+        wValues /= np.sum(weights2,axis=1)[:,None]
+        # &lt;/FIXME&gt;&#39;&#39;&#39;
+        wValues = Values*weights
+        wValues /= np.sum(weights,axis=1)[:,None]
+        
+        try:
+            Signal = np.average(Values, axis=1)
+        except:
+            print(Neurons)
+            print(Indices)
+            print(Values)
+        
+        return Signal
+        
+    elif method==&#34;weightedMask2d&#34;:
+        weights = kwargs[&#39;weights&#39;]
+        
+        #hard coded indices - curvature extraction in neuronsegmentation-c
+        nElements = 13
+        Box = np.array([
+            [0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [-2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2],
+            [0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0]
+            ])
+        
+        # Generate indices based on box
+        Indices = _generate_box_indices(Neurons, Box=Box, shape=Frames.shape)
+        
+        # Extract the values for each pixel
+        Values = _slice_array(Frames,Indices).astype(np.float)
+        
+        # Reshape, multiply by weights and sum values in each box
+        Values = Values.reshape((nNeuron,nElements))-framePixelOffset
+        wValues = Values*weights
+        wValues /= np.sum(weights,axis=1)[:,None]
+        
+        Signal = np.average(Values, axis=1) 
+        
+        return Signal
+        
+    elif method==&#34;fitSphere&#34;:
+        # Doesn&#39;t really seem to help. Dropping it right now..
+        
+        # Right now this is fixed, it cannot be chosen
+        box_size = (2,3,3)
+        nElements = np.prod(box_size)
+        
+        # Generate indices based on box
+        Indices = _generate_box_indices(Neurons, box_size)
+        
+        # Extract the values for each pixel, reshape, subtract camera offset
+        Values = _slice_array(Frames,Indices).astype(np.float)
+        Values = Values.reshape((nNeuron,nElements))-framePixelOffset
+        
+        # Calculate average signal at central plane and next one, to be used
+        # to extract the radius of the neuron. Normalize them
+        Y = np.empty((Values.shape[0],2))
+        Y[:,0] = np.average(Values[:,0:9],axis=-1)
+        Y[:,1] = np.average(Values[:,9:],axis=-1)
+        
+        Y[:,0] /= Y[:,0]
+        Y[:,1] /= Y[:,1]
+        
+        # Calculate the radius of the neuron
+        R = _sphere_radius(Y)
+        
+        # Extract signal and multiply by the radius
+        Signal = np.average(Values[:,0:9], axis=1)*R
+        
+        return Signal
+    
+    else:
+        print(&#34;Signal extraction method not implemented. See pp.signal.extract&#34;)
+        quit()    </code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="wormdatamodel.signal" href="index.html">wormdatamodel.signal</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="wormdatamodel.signal.extraction.extract" href="#wormdatamodel.signal.extraction.extract">extract</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.3</a>.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,1699 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.3" />
+<title>wormdatamodel.data API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha256-eOgo0OtLL4cdq7RdwRUiGKLX9XsIJ7nGhWEKbohmVAQ=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>wormdatamodel.data</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">__all__ = [&#39;recording&#39;,&#39;volume&#39;,&#39;redtogreen&#39;] # I&#39;m not really sure this is correct
+
+from .recording import recording
+from ._legacy_c import load_frames_legacy
+from .volume import volume
+from .redtogreen import redToGreen, genRedToGreen</code></pre>
+</details>
+</section>
+<section>
+<h2 class="section-title" id="header-submodules">Sub-modules</h2>
+<dl>
+<dt><code class="name"><a title="wormdatamodel.data.redtogreen" href="redtogreen.html">wormdatamodel.data.redtogreen</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="wormdatamodel.data.recording"><code class="flex name class">
+<span>class <span class="ident">recording</span></span>
+<span>(</span><span>foldername, legacy=False, rectype=None, settings={})</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Class representing a sequence of images/frames in time. The images can be
+composed of multiple channels (although the implementation currently has
+this hardcoded to 2 channels), and the sequence can be a simple video or
+a volumetric recording.</p>
+<p>At initialization, only the metadata of the recording is loaded, so that
+the class can be used in a lightweight mode.
+Once the object is created,
+the frames can be loaded in memory with the method load() passing
+startFrame and stopFrame or, more commonly, startVolume and nVolume.</p>
+<p>Given that the frames can take up a lot of memory, the class can be used
+with contexts as in::
+with wormdatamodel.data.recording(folder) as rec:
+rec.load(startVolume=i, nVolume=N)
+so that memory is freed once the script exits the context. Alternatively,
+the memory associated with the frame buffer can be freed manually using
+the method free_memory(). </p>
+<p>Below, some useful attributes and methods (the list is not complete).</p>
+<h2 id="attributes">Attributes</h2>
+<dl>
+<dt><strong><code>frame</code></strong> :&ensp;<code>numpy array</code></dt>
+<dd>Contains the loaded frames.</dd>
+<dt><strong><code>volumeFirstFrame</code></strong> :&ensp;<code>numpy array </code></dt>
+<dd>Array with the indices of the first frames of each volume</dd>
+<dt><strong><code>ZZ</code></strong> :&ensp;<code>list</code> of <code>numpy arrays </code></dt>
+<dd>Contains the z coordinate of the frames in each volume.</dd>
+</dl>
+<h2 id="methods">Methods</h2>
+<p>load(startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, jobMaxMemory=100<em>2</em>*30)
+Loads the frames according to parameters passed.
+get_events(self, shift=0):
+Returns metadata about events happened during the measurement, like
+optogenetics stimulations. </p>
+<p>Class constructor: Does not load all the data, so that the class can
+be used also in a light-weight mode. If the recording type (2d or 3d) is
+not specified, the constructor determines it based on the file
+structure, then loads the metadata of the recording (including the data
+relative to optogenetics stimulations, if present).</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>foldername</code></strong> :&ensp;<code>string</code></dt>
+<dd>Folder containing the recording. The file names must follow the
+convention detailed by the default values of the filename
+attributes.</dd>
+<dt><strong><code>legacy</code></strong> :&ensp;<code>bool (optional)</code></dt>
+<dd>Set to True if the recording was taken on the old whole brain
+imager. This is needed, e.g., to determine how the frames are stored
+in the file, with each frame in each channel being contiguous
+(legacy=False) or with line0R,line0G,line1R,line1G&hellip;
+Default: False.</dd>
+<dt><strong><code>rectype</code></strong> :&ensp;<code>string (optional)</code></dt>
+<dd>Can be "3d" or "2d". If it is not set, the constructor tries to
+determine it based on the file structure. Default: None.</dd>
+<dt><strong><code>settings</code></strong> :&ensp;<code>dict (optional)</code></dt>
+<dd>Contains additional settings. Currently only the key "latencyShift"
+is used, which specifies if there is a delay between the z position
+of the device used (piezo motor or tunable lens) and its monitor
+output. It depends, e.g., on whether the piezo and the objective
+are mounted vertically or horizontally.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class recording:
+    &#39;&#39;&#39;Class representing a sequence of images/frames in time. The images can be
+    composed of multiple channels (although the implementation currently has
+    this hardcoded to 2 channels), and the sequence can be a simple video or
+    a volumetric recording.
+    
+    At initialization, only the metadata of the recording is loaded, so that
+    the class can be used in a lightweight mode.  Once the object is created, 
+    the frames can be loaded in memory with the method load() passing 
+    startFrame and stopFrame or, more commonly, startVolume and nVolume.
+    
+    Given that the frames can take up a lot of memory, the class can be used
+    with contexts as in::
+        with wormdatamodel.data.recording(folder) as rec:
+            rec.load(startVolume=i, nVolume=N)
+    so that memory is freed once the script exits the context. Alternatively,
+    the memory associated with the frame buffer can be freed manually using
+    the method free_memory(). 
+    
+    Below, some useful attributes and methods (the list is not complete).
+    
+    Attributes
+    ----------
+    frame: numpy array
+        Contains the loaded frames.
+    volumeFirstFrame: numpy array 
+        Array with the indices of the first frames of each volume
+    ZZ: list of numpy arrays 
+        Contains the z coordinate of the frames in each volume.
+
+    Methods
+    -------
+    load(startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, jobMaxMemory=100*2**30)
+        Loads the frames according to parameters passed.
+    get_events(self, shift=0):
+        Returns metadata about events happened during the measurement, like
+        optogenetics stimulations. 
+    
+    &#39;&#39;&#39;
+    # Acquisition parameters
+    dt = 0.005
+    piezoFrequency = 3.0
+    
+    channelSizeX = np.uint16
+    channelSizeY = np.uint16
+    channelN = np.uint16
+    frameBitDepth = np.uint16
+    
+    channelSizeX = 512 # pixels
+    channelSizeY = 512 # pixels
+    channelSize = channelSizeX * channelSizeY
+    channelN = 2
+    frameSize = channelSize * channelN
+    frameBitDepth = 16 # bits
+    frameDType = np.uint16
+    frameSizeBytes = frameSize * frameBitDepth // 8
+    frameBinning = 1
+    frameCountOffset = 100
+    framePixelOffset = frameBinning*frameCountOffset
+    
+    frameUmPerPixel = 0.42
+    framePixelPerUm = 1./frameUmPerPixel
+    
+    # State of memory buffer for frames
+    memorySaturated = False
+    frameBufferLock = False
+    frameLastLoaded = -1
+    frameBufferPosition = 0
+    filePosition = 0
+    
+    # Conventions on filenames
+    filenameFrames = &#34;sCMOS_Frames_U16_1024x512.dat&#34; #&#39;frames_1024x512xU16.dat&#39;
+    filenameFramesDetails = &#34;framesDetails.txt&#34;
+    filenameOtherFrameSynchronous  = &#34;other-frameSynchronous.txt&#34;
+    filenameZDetails = &#34;zScan.json&#34;
+    filenameOptogeneticsTwoPhoton = &#34;pharosTriggers.txt&#34;
+    
+    def __init__(self, foldername, legacy=False, rectype=None, settings={}):
+        &#39;&#39;&#39;Class constructor: Does not load all the data, so that the class can 
+        be used also in a light-weight mode. If the recording type (2d or 3d) is
+        not specified, the constructor determines it based on the file
+        structure, then loads the metadata of the recording (including the data
+        relative to optogenetics stimulations, if present).
+        
+        Parameters
+        ----------
+        foldername: string
+            Folder containing the recording. The file names must follow the
+            convention detailed by the default values of the filename
+            attributes.
+        legacy: bool (optional)
+            Set to True if the recording was taken on the old whole brain 
+            imager. This is needed, e.g., to determine how the frames are stored
+            in the file, with each frame in each channel being contiguous
+            (legacy=False) or with line0R,line0G,line1R,line1G... 
+            Default: False.
+        rectype: string (optional)
+            Can be &#34;3d&#34; or &#34;2d&#34;. If it is not set, the constructor tries to
+            determine it based on the file structure. Default: None.
+        settings: dict (optional)
+            Contains additional settings. Currently only the key &#34;latencyShift&#34;
+            is used, which specifies if there is a delay between the z position
+            of the device used (piezo motor or tunable lens) and its monitor
+            output. It depends, e.g., on whether the piezo and the objective
+            are mounted vertically or horizontally.
+        &#39;&#39;&#39;
+        if foldername[-1] == &#34;/&#34;:
+            self.foldername = foldername
+        else:
+            self.foldername = foldername+&#34;/&#34;
+        self.filename = self.foldername+self.filenameFrames
+        
+        self.legacy = legacy
+        
+        if rectype == None:
+            if os.path.isfile(foldername+self.filenameZDetails): 
+                self.rectype = &#34;3d&#34;
+            else:
+                self.rectype = &#34;2d&#34;
+            print(&#34;Assuming it is a &#34;+self.rectype+&#34; recording.&#34;)
+        else:
+            self.rectype = rectype
+            
+            
+        try:
+            self.latencyShift = settings[&#34;latencyShift&#34;]
+        except:
+            self.latencyShift = 0
+        
+        # Load extra information
+        self.load_extra()
+        
+        # Load optogenetics information. Autodetects if present
+        self.load_optogenetics()
+        
+        self.frameBufferIndexes = np.array([])
+        self.frame = np.array([])
+    
+    def __enter__(self):
+        return self
+        
+    def __exit__(self, type, value, traceback):
+        del self.frame
+        
+    def load(self, *args, **kwargs):
+        if self.rectype==&#34;3d&#34;:
+            self._load_3d(*args, **kwargs)
+        elif self.rectype==&#34;2d&#34;:
+            self._load_2d(*args, **kwargs)
+    
+    def free_memory(self):
+        del self.frame
+        self.frame = np.array([])
+    
+    def _load_3d(self, startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, 
+                jobMaxMemory=100*2**30):
+        &#39;&#39;&#39;Load the frames from a 3D recording. Specify either start and stop
+        frames or start and number of volumes. Will not load anything if the
+        estimated memory usage exceeds the maximum job memory limit. 
+        All parameters are optional. If nothing is passed, the
+        function attempts to load the whole file.
+        
+        The frames are directly loaded in self.frame and not returned.
+        
+        Parameters
+        ----------
+        startFrame: int (optional)
+            First frame to load, in the file reference frame (not absolute
+            frame index). Used only if nVolume is not set. Default: 0.
+        stopFrame: int (optional)
+            Last frame to load, in the file reference frame (not absolute 
+            frame index). Used only if nVolume is not set. 
+            Default: -1, i.e. until end of file.
+        startVolume: int (optional)
+            First volume to load. The 0th volume is the first complete volume
+            in the recording. Used only if nVolume is set. Default: 0.
+        nVolume: int (optional)
+            Number of volumes to load. Default: -1, corresponding to not set.
+        jobMaxMemory: scalar (optional)
+            Sets the limit of memory that can be used. Default: 100 GB.
+        &#39;&#39;&#39;
+        
+        if nVolume!=-1:
+            startFrame = self.volumeFirstFrame[startVolume]
+            stopFrame = self.volumeFirstFrame[startVolume+nVolume]
+        
+        if stopFrame==-1: 
+            # Calculate number of frames contained in the file and subtract 
+            # initial frames skipped
+            self.frameN = os.stat(self.filename).st_size / self.frameSizeBytes
+            self.frameN -= startFrame
+            
+        else:
+            self.frameN = stopFrame - startFrame
+        
+        # Get an estimate of the memory that will be used in the analysis
+        self.memoryEstimatedUsage = self._get_memoryEstimatedUsage()
+
+        # Now you should check that you are not loading and allocating more data
+        # that can be contained in RAM. If you think you&#39;re hitting the limit
+        # load up to a maximum number of frames and store the position you reach
+        # in the file.
+        
+        #self.frameBufferSize = int(round(min(self.memoryEstimatedUsage, jobMaxMemory))) // self.frameSizeBytes
+        if self.memoryEstimatedUsage &gt; jobMaxMemory:
+            self.memorySaturated = True
+            print(&#34;You tried to load more data than memory available. Nothing done.&#34;)
+        else:
+            # Initialize look-up table for actual frame indexes inside the buffer
+            self.frameBufferIndexes = np.zeros(self.frameN, 
+                                                dtype=np.uint32)
+            
+            # Load the frames
+            if self.legacy==True:
+                self.load_frames_legacy(startFrame, self.frameN)
+            else:
+                self.load_frames(startFrame, self.frameN)
+                
+        # The following is for future upgrades
+        # self.frames will act as a circular buffer, so you need a system to 
+        # lock the frames on which the program is working, so that they are not
+        # overwritten.
+        # Initialize empty numpy array for the frame buffer [ch, i, x, y]
+        #self.frame = np.empty((self.frameBufferSize, self. channelN,
+        #                        self.channelSizeX, self.channelSizeY), 
+        #                        dtype=np.uint16)
+        
+        # Initialize lock of the buffer, to avoid loading more data when you
+        # cannot. The simple version is to get a single lock on everything.
+        #self.frameBufferLocks = np.zeros(self.frameBufferSize, dtype=np.bool)
+        
+    def _load_2d(self, startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, jobMaxMemory=100*2**30):
+        &#39;&#39;&#39;Load the frames from a 2D recording. Specify either start and stop
+        frames or start and number of volumes. In this case, the volume notation
+        is provided to keep a uniform notation across 2D and 3D recordings.
+        Each frame corresponds to one volume. Will not load anything if the
+        estimated memory usage exceeds the maximum job memory limit. 
+        All parameters are optional. If nothing is passed, the
+        function attempts to load the whole file.
+        
+        The frames are directly loaded in self.frame and not returned.
+        
+        Parameters
+        ----------
+        startFrame: int (optional)
+            First frame to load, in the file reference frame (not absolute
+            frame index). Used only if nVolume is not set. Default: 0.
+        stopFrame: int (optional)
+            Last frame to load, in the file reference frame (not absolute 
+            frame index). Used only if nVolume is not set. 
+            Default: -1, i.e. until end of file.
+        startVolume: int (optional)
+            First volume to load. The 0th volume is the first complete volume
+            in the recording. Used only if nVolume is set. Default: 0.
+        nVolume: int (optional)
+            Number of volumes to load. Default: -1, corresponding to not set.
+        jobMaxMemory: scalar (optional)
+            Sets the limit of memory that can be used. Default: 100 GB.
+        &#39;&#39;&#39;
+        
+        
+        if nVolume != -1:
+            startFrame = startVolume
+            stopFrame = startFrame + nVolume
+             
+        if stopFrame==-1: 
+            # Calculate number of frames contained in the file and subtract 
+            # initial frames skipped
+            self.frameN = os.stat(self.filename).st_size / self.frameSizeBytes
+            self.frameN -= startFrame
+            self.frameN = (int)(self.frameN)
+            
+        else:
+            self.frameN = stopFrame - startFrame
+        
+        # Get an estimate of the memory that will be used in the analysis
+        self.memoryEstimatedUsage = self._get_memoryEstimatedUsage()
+
+        # Now you should check that you are not loading and allocating more data
+        # that can be contained in RAM. If you think you&#39;re hitting the limit
+        # load up to a maximum number of frames and store the position you reach
+        # in the file.
+        
+        #self.frameBufferSize = int(round(min(self.memoryEstimatedUsage, jobMaxMemory))) // self.frameSizeBytes
+        if self.memoryEstimatedUsage &gt; jobMaxMemory:
+            self.memorySaturated = True
+            print(&#34;You tried to load more data than memory available. Nothing done.&#34;)
+        else:
+            # Initialize look-up table for actual frame indexes inside the buffer
+            self.frameBufferIndexes = np.zeros(self.frameN, 
+                                                dtype=np.uint32)
+            
+            # Load the frames
+            if self.legacy==True:
+                self.load_frames_legacy(startFrame, self.frameN)
+            else:
+                self.load_frames(startFrame, self.frameN)
+            
+        
+    def load_frames(self, startFrame=0, frameN=0):
+        &#39;&#39;&#39;Loads the specified frames into the class buffer, from a file in which
+        each frame in each channel is contiguously stored (line0R, line1R, ...,
+        line0G, line1G, ...)
+        
+        Parameters
+        ----------
+        startFrame: int (optional)
+            First frame to load, in the file reference frame (not absolute frame
+            count). Default: 0.
+        frameN: int (optional)
+            Number of frames to load.
+        &#39;&#39;&#39;
+        
+        # Open file
+        self.file = open(self.foldername+self.filenameFrames, &#39;br&#39;)
+        # Go to desired start frame
+        self.file.seek(self.frameSizeBytes*startFrame)
+        
+        self.frame = np.fromfile(self.file, dtype=self.frameDType, 
+                        count=frameN*self.frameSize).reshape(
+                        frameN,self.channelN,
+                        self.channelSizeY,self.channelSizeX)
+                        
+        self.filePosition = self.file.tell()
+        # Close file
+        self.file.close()
+        self.frameLastLoaded = startFrame+frameN
+        
+        self.frameBufferIndexes = np.arange(startFrame,
+                                        startFrame+frameN).astype(np.uint32)
+                                        
+    def load_frames_legacy(self, startFrame=0, frameN=0):
+        &#39;&#39;&#39;Loads the specified frames into the buffer from a file in which the
+        image is stored line0R,line0G,line1R,line1G,...
+        
+        Parameters
+        ----------
+        startFrame: int (optional)
+            First frame to load, in the file reference frame (not absolute frame
+            count). Default: 0.
+        frameN: int (optional)
+            Number of frames to load.
+        &#39;&#39;&#39;
+        
+        # Pre-allocate the memory for the frames          
+        self.frame = np.empty((frameN,self.channelN,
+                               self.channelSizeY,self.channelSizeX),
+                               dtype=np.uint16)
+        # Load                       
+        wormdm.data.load_frames_legacy(self.foldername+self.filenameFrames, 
+                                   (np.int32)(startFrame), (np.int32)(frameN), 
+                                   (np.int32)(self.channelSizeX), 
+                                   (np.int32)(self.channelSizeY),
+                                   self.frame)
+        
+        self.frameLastLoaded = startFrame+frameN
+        
+        self.frameBufferIndexes = np.arange(startFrame,
+                                        startFrame+frameN).astype(np.uint32)
+                                        
+    def load_extra(self):
+        &#39;&#39;&#39;Load metadata for the recording, implicitly choosing the type of
+        metadata depending on the recording type (2D or 3D). Loads directly in
+        the class variables, does not return anything.
+        &#39;&#39;&#39;
+        if self.rectype==&#34;3d&#34;:
+            self._load_extra_3d()
+        elif self.rectype==&#34;2d&#34;:
+            self._load_extra_2d()
+        
+    def _load_extra_3d(self):
+        &#39;&#39;&#39;Load metadata for 3D recordings. The function builds a correspondence
+        between frame index in the file reference frame and the absolute frame
+        count, assigns each frame to a volume, and to a z position.
+        &#39;&#39;&#39;
+        # Load the details of the frames that are downloaded from the camera
+        # together with the frames: for each frame in the sequence of saved
+        # frames there is one entry in this file containing its absolute count
+        # from the beginning of the acquisition (not the saving) and its 
+        # timestamp.
+        framesDetails = np.loadtxt(self.foldername+self.filenameFramesDetails,skiprows=1).T
+        self.frameTime = framesDetails[0]
+        a, b = np.unique(np.diff(self.frameTime), return_counts=True)
+        self.dt = round(a[np.argmax(b)],3)
+        frameCount = framesDetails[1].astype(int)
+        
+        # Load the details of the frames that are acquired synchrounously to
+        # the camera triggers. Each entry contains the value of the counter 
+        # counting the triggers (framesCountDAQ), corresponding to the absolute
+        # count downloaded from the camera.
+        frameSync = np.loadtxt(self.foldername+self.filenameOtherFrameSynchronous,skiprows=1).T
+        frameCountDAQ = frameSync[0].astype(int)
+        #latencyShift = 0
+        if self.latencyShift!=0:
+            frameCountDAQ += self.latencyShift
+            print(&#34;Applying latency shift: &#34;+str(self.latencyShift)+&#34; frames.&#34;)
+        volumeIndexDAQ = frameSync[3].astype(int)
+        volumeDirectionDAQ = frameSync[2].astype(int)
+        ZDAQ = frameSync[1]
+        
+        # Correct frameCount: sometimes the frameCount jumps by 2 at one step
+        # and by 0 at the next one. TODO: check whether the index in the buffer
+        # changes accordingly, or if I&#39;m saving the same frame twice.
+        frameCountCorr = np.copy(frameCount)
+        dframeCount = np.diff(frameCount)
+        
+        for i in np.arange(len(frameCount)-1):
+            if(dframeCount[i]==0 and dframeCount[i-1]==2):
+                frameCountCorr[i] -= 1
+
+        self.frameCount = frameCountCorr
+        
+        # Get the volume to which each frame in FrameDetails belongs from the DAQ data
+        volumeIndex = np.ones_like(frameCount)*(-10)
+        self.volumeDirection = np.empty(len(frameCount),dtype=np.float)#FIXME,dtype=np.int8)
+        self.volumeDirection[:] = np.nan
+        self.Z = np.empty(len(frameCount),dtype=np.float)
+        self.Z[:] = np.nan
+        for i in np.arange(len(frameCount)):
+            try:
+                # Find the index of the entry in the camera-trigger-synchronous
+                # data that corresponds to the absolute count frameCount[i].
+                indexInDAQ = np.where(frameCountDAQ == frameCount[i])
+                # Extract the information from that entry.
+                volumeIndex[i] = volumeIndexDAQ[indexInDAQ]
+                self.Z[i] = ZDAQ[indexInDAQ]
+                self.volumeDirection[i] = (volumeDirectionDAQ[indexInDAQ]+1)//2
+            except:
+                # If there is no matching saved frame (dropped), pass and leave
+                # nan entries. They will be interpolated below.
+                pass
+                
+        # Interpolate missing values for Z and volumeDirection
+        # If there are gaps in frameCount (dropped frames) inside the volumes,  
+        # the interpolation of the Z will produce steeper regions, that remain,
+        # however, locally monotonic. If the gaps are at the volume boundaries,
+        # this will move the change of sign of the derivative into one of the
+        # neighboring volumes.
+        nans, x = np.isnan(self.Z), lambda z: z.nonzero()[0]
+        self.Z[nans]= np.interp(x(nans), x(~nans), self.Z[~nans])
+        self.volumeDirection[nans] = np.interp(x(nans), x(~nans), self.volumeDirection[~nans]).astype(np.float)#FIXME astype(np.int8)
+        
+        # Use the derivative of Z to determine the volumeDirection, instead of
+        # the output of the differentiator. The latter has some problems...
+        # Maybe you should change the 
+        if self.legacy:
+            print(&#34;Using the derivative of Z to determine the volume direction and the volume index, instead of the output of the differentiator. (Legacy)&#34;)
+            smn=4
+            sm = np.ones(smn)/smn
+            Z_sm = np.copy(self.Z)
+            #FIXME Z_sm = np.convolve(self.Z,sm,mode=&#34;same&#34;)
+            self.volumeDirection[:-1] = np.sign(np.diff(Z_sm))
+            self.volumeDirection[-1] = self.volumeDirection[-2]
+            self.volumeDirection = (-self.volumeDirection+1)//2
+            volumeIndex[1:] = np.cumsum(np.absolute(np.diff(self.volumeDirection)))
+            volumeIndex[0] = volumeIndex[1]
+
+        self.volumeIndex = volumeIndex
+            
+        # Get the first frame of each volume as indexes in the list of frames 
+        # that have been saved, regardless of dropped frames, so that you can
+        # use these directly to load the files. frameTime, the absolute 
+        # frameCount, and volumeIndex (not volumeIndexDAQ) can be indexed using
+        # self.volumeFirstFrame.
+        self.volumeFirstFrame = np.where(np.diff(volumeIndex)==1)[0]+1
+        self.nVolume = len(self.volumeFirstFrame)-2
+        
+        # Get the details about the Z scan. The values in the DAQ file are in V.
+        # The file contains also the etlCalibrationMindpt and Maxdpt, which 
+        # correspond to the diopters corresponding to 0 and 5 V, respectively.
+        try:
+            fz = open(self.foldername+self.filenameZDetails)
+            zDetails = json.load(fz)
+            fz.close()
+            zUmOverV = 1./zDetails[&#34;V/um&#34;]
+        except:
+            zUmOverV = 1./0.05
+        
+        # Build the list ZZ of Z split in different volumes
+        self.ZZ = []
+        for k in np.arange(len(self.volumeFirstFrame)-1):
+            frame0 = self.volumeFirstFrame[k]
+            framef = self.volumeFirstFrame[k+1]
+            zeta = self.Z[frame0:framef]*zUmOverV*self.framePixelPerUm
+            # TODO is this really necessary? Isn&#39;t it already in it?
+            #zeta = zeta - np.average(zeta)
+            #if self.volumeDirection[frame0] == 0: zeta *= -1
+            self.ZZ.append(zeta)
+
+        #self.stackIdx = np.array(sio.loadmat(self.foldername+&#39;hiResData.mat&#39;)[&#39;dataAll&#39;][0][0][4])
+        #self.stackIdx = self.stackIdx.reshape(self.stackIdx.shape[0])
+        
+    def _load_extra_2d(self):
+        &#39;&#39;&#39;Load metadata for a 2D recording. The function loads an absolute time
+        axis, the absolute frame counts, and counts the number of volumes,
+        with each volume being one single frame.
+        &#39;&#39;&#39;
+        
+        framesDetails = np.loadtxt(self.foldername+self.filenameFramesDetails,skiprows=1).T
+        self.T = framesDetails[0]
+        a, b = np.unique(np.diff(self.T), return_counts=True)
+        self.dt = round(a[np.argmax(b)],3)
+        self.frameCount = framesDetails[1].astype(int)
+        self.nVolume = self.frameCount.shape[0]
+        
+        
+    def load_optogenetics(self):
+        &#39;&#39;&#39;Load optogenetics metadata. Automatically detects a couple of 
+        saving configurations, that have changed in time.
+        &#39;&#39;&#39;
+        if os.path.isfile(self.foldername+self.filenameOptogeneticsTwoPhoton):
+            self.optogeneticsType = &#34;twoPhoton&#34;
+            optogeneticsF = open(self.foldername+self.filenameOptogeneticsTwoPhoton)
+            Line = optogeneticsF.readlines()
+            optogeneticsF.close()
+            if Line[0] == &#34;frameCount\tnPulses\trepRateDivider\toptogTargetX\toptogTargetY\toptogTargetZ\toptogTargetXYSpace\toptogTargetZSpace\toptogTargetZDevice\tTime\n&#34;:
+                Line.pop(0)
+                if Line[-1]==&#34;&#34;: Line.pop(-1)
+                self.optogeneticsN = len(Line)
+                self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsTargetX = np.zeros(self.optogeneticsN)
+                self.optogeneticsTargetY = np.zeros(self.optogeneticsN)
+                self.optogeneticsTargetZ = np.zeros(self.optogeneticsN)
+                self.optogeneticsTargetXYSpace = [&#34;None&#34;]*self.optogeneticsN
+                self.optogeneticsTargetZSpace = [&#34;None&#34;]*self.optogeneticsN
+                self.optogeneticsTargetZDevice = [&#34;None&#34;]*self.optogeneticsN
+                self.optogeneticsTime = [&#34;None&#34;]*self.optogeneticsN
+                
+                #These won&#39;t be populated in this case
+                self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
+                
+                for i in np.arange(self.optogeneticsN):
+                    line = Line[i]
+                    sline = line.split(&#34;\t&#34;)
+                    self.optogeneticsFrameCount[i] = int(sline[0])
+                    self.optogeneticsNPulses[i] = int(sline[1])
+                    self.optogeneticsRepRateDivider[i] = int(sline[2])
+                    self.optogeneticsTargetX[i] = float(sline[3])
+                    self.optogeneticsTargetY[i] = float(sline[4])
+                    self.optogeneticsTargetZ[i] = float(sline[5])
+                    self.optogeneticsTargetXYSpace[i] = sline[6]
+                    self.optogeneticsTargetZSpace[i] = sline[7]
+                    self.optogeneticsTargetZDevice[i] = sline[8]
+                    self.optogeneticsTime[i] = sline[9]
+                    
+            elif Line[0] == &#34;frameCount\tnPulses\trepRateDivider\tnTrains\ttimeBtwTrains\toptogTargetX\toptogTargetY\toptogTargetZ\toptogTargetXYSpace\toptogTargetZSpace\toptogTargetZDevice\tTime\n&#34;:
+                Line.pop(0)
+                if Line[-1]==&#34;&#34;: Line.pop(-1)
+                self.optogeneticsN = len(Line)
+                self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
+                self.optogeneticsTargetX = np.zeros(self.optogeneticsN)
+                self.optogeneticsTargetY = np.zeros(self.optogeneticsN)
+                self.optogeneticsTargetZ = np.zeros(self.optogeneticsN)
+                self.optogeneticsTargetXYSpace = [&#34;None&#34;]*self.optogeneticsN
+                self.optogeneticsTargetZSpace = [&#34;None&#34;]*self.optogeneticsN
+                self.optogeneticsTargetZDevice = [&#34;None&#34;]*self.optogeneticsN
+                self.optogeneticsTime = [&#34;None&#34;]*self.optogeneticsN
+                
+                for i in np.arange(self.optogeneticsN):
+                    line = Line[i]
+                    sline = line.split(&#34;\t&#34;)
+                    self.optogeneticsFrameCount[i] = int(sline[0])
+                    self.optogeneticsNPulses[i] = int(sline[1])
+                    self.optogeneticsRepRateDivider[i] = int(sline[2])
+                    self.optogeneticsNTrains[i] = int(sline[3])
+                    self.optogeneticsTimeBtwTrains[i] = float(sline[4])
+                    self.optogeneticsTargetX[i] = float(sline[5])
+                    self.optogeneticsTargetY[i] = float(sline[6])
+                    self.optogeneticsTargetZ[i] = float(sline[7])
+                    self.optogeneticsTargetXYSpace[i] = sline[8]
+                    self.optogeneticsTargetZSpace[i] = sline[9]
+                    self.optogeneticsTargetZDevice[i] = sline[10]
+                    self.optogeneticsTime[i] = sline[11]
+        
+        else:
+            self.optogeneticsType = &#34;None&#34;
+            
+    def _get_memoryEstimatedUsage(self):
+        &#39;&#39;&#39;Returns the estimated memory usage for the class, based on:
+        - the buffer itself, for the volumes on which
+        - the parallel for will be working on
+        &#39;&#39;&#39;
+        
+        return self.frameN * self.frameSizeBytes * 1.1
+        
+    def _get_memoryUsagePerVolume(self, nFrameInVol=None):
+        if nFrameInVol is None:
+            nFrameInVol = np.max(np.diff(self.volumeFirstFrame))
+        return nFrameInVol*self.frameSizeBytes*1.3
+        
+    def get_volume(self, i):
+        &#39;&#39;&#39;Returns the i-th volume, either taking it from the buffer or loading it
+        from file.
+        &#39;&#39;&#39;
+        #FramesIdx, = np.where(self.stackIdx == i)
+        #firstFrame = FramesIdx[0]
+        #lastFrame = FramesIdx[-1]
+        firstFrame = self.volumeFirstFrame[i]
+        lastFrame = self.volumeFirstFrame[i+1]
+        print(firstFrame,lastFrame)
+        #print(firstFrame,lastFrame)
+        volumeZ = np.zeros(lastFrame-firstFrame)
+        
+        if firstFrame in self.frameBufferIndexes:
+            firstFrame = np.where(self.frameBufferIndexes==firstFrame)[0][0]
+            lastFrame = np.where(self.frameBufferIndexes==lastFrame)[0][0]  
+            vol = wormdm.data.volume(self.frame[firstFrame:lastFrame], 
+                         volumeZ) #[i]
+        else:
+            vol = wormdm.data.volume(self.load_framesStandAlone(firstFrame,lastFrame-1),
+                         volumeZ) #[i]
+                         
+        return vol
+        
+    def get_events(self, shift=0):
+        &#39;&#39;&#39;Returns metadata about events happened during the measurement, like
+        optogenetics stimulations. 
+        
+        Parameters
+        ----------
+        shift: int (optional)
+            Index of the first event to be considered.
+        
+        Returns
+        -------
+        events: dict
+            Dictionary containing the metadata. For example,
+            events[&#39;optogenetics&#39;] is a dictionary with keys &#39;index&#39;, &#39;strides&#39;,
+            &#39;properties&#39;. Index is the frame index at which the event happened,
+            strides are the number of frames between two events (meant to be 
+            used with irregular arrays, for example). Properties is a dictionary
+            with keys &#39;type&#39;, &#39;n_pulses&#39;, &#39;rep_rate_divider&#39;, &#39;n_trains&#39;, 
+            &#39;time_btw_trains&#39;, &#39;target&#39;, &#39;target_xy_space&#39;, &#39;target_z_space&#39;,
+            &#39;target_z_device&#39;, &#39;time&#39;.
+        
+        &#39;&#39;&#39;
+        events = {}
+        
+        # OPTOGENETICS
+        I = self.optogeneticsFrameCount.shape[0]
+        
+        # Find the closest frame to the trigger event, in case the exact one
+        # has been dropped.
+        index = np.zeros(I,dtype=np.int32)
+        for i in np.arange(I):
+            d = np.absolute(self.optogeneticsFrameCount[i]+shift-self.frameCount)
+            index[i] = np.argmin(d)
+            
+        if self.rectype == &#34;3d&#34;:
+            index = self.volumeIndex[index]
+            
+        ampl_indices = np.zeros(len(index)+2)
+        ampl_indices[1:-1] = index
+        ampl_indices[-1] = self.nVolume
+        strides = np.diff(ampl_indices)
+            
+        properties = {
+            &#39;type&#39;: &#39;twophoton&#39;,
+            &#39;n_pulses&#39;: self.optogeneticsNPulses,
+            &#39;rep_rate_divider&#39;: self.optogeneticsRepRateDivider,
+            &#39;n_trains&#39;: self.optogeneticsNTrains,
+            &#39;time_btw_trains&#39;: self.optogeneticsTimeBtwTrains,
+            &#39;target&#39;: np.array([
+                self.optogeneticsTargetX,
+                self.optogeneticsTargetY,
+                self.optogeneticsTargetZ
+                ]).T,
+            &#39;target_xy_space&#39;: self.optogeneticsTargetXYSpace,
+            &#39;target_z_space&#39;: self.optogeneticsTargetZSpace,
+            &#39;target_z_device&#39;: self.optogeneticsTargetZDevice,
+            &#39;time&#39;: self.optogeneticsTime
+            }
+        
+         
+        events[&#39;optogenetics&#39;] = {&#39;index&#39;: index, 
+                                  &#39;strides&#39;: strides,
+                                  &#39;properties&#39;: properties}
+        
+        return events
+        
+    
+    ## SOME FUNCTIONS FOR FUTURE IMPLEMENTATION
+    
+    
+    def load_frames_onebyone(self, startFrame=0, stopFrame=-1):
+        &#39;&#39;&#39;
+        Loads the specified frames into the buffer.
+        &#39;&#39;&#39;
+        
+        # Go to desired start frame
+        self.file.seek(self.frameSizeBytes*startFrame)
+        
+        i = 0
+        while self.load_frame( startFrame + i,
+                (self.frameBufferPosition + i) % self.frameBufferSize ):
+            i += 1
+            if stopFrame != -1 and i == (stopFrame-startFrame): break
+
+        # Update the variables storing the positions in the file and in the 
+        # buffer. TODO controlla questi i+1
+        self.frameBufferPosition = (self.frameBufferPosition + i +1) % \
+                                   self.frameBufferSize
+        
+        self.filePosition = self.file.tell()
+        self.frameLastLoaded = startFrame + i
+                
+                        
+    def load_frame(self, k,i):
+        &#39;&#39;&#39;
+        Loads next frame from current position in the opened file and stores it
+        at the i-th index in the self.frames buffer. Returns True if it
+        successfully read a full chunk from the file, False if it did not.
+        &#39;&#39;&#39;
+        
+        chunk = self.file.read(self.frameSizeBytes)
+        
+        if len(chunk) == self.frameSizeBytes:
+        
+            # Unpack bytes from file
+            im = np.array(struct.unpack(str(self.frameSize)+&#39;H&#39;, chunk))
+            
+            # Reshape it so that it looks like an image
+            im = im.reshape((self.channelSizeX, 
+                             self.channelSizeY*self.channelN))
+            
+            # Split the image into the channels
+            for j in np.arange(self.channelN):
+                self.frame[j,i,...] = \
+                        im[:,j*self.channelSizeX:(j+1)*self.channelSizeX]
+            
+            self.frameBufferIndexes[i] = k
+            
+            return True
+        else:
+            return False
+            
+    def load_frameStandAlone(self, k):
+        &#39;&#39;&#39;
+        Returns a frame as a numpy array, without storing it in an attribute of
+        the class itself.
+        &#39;&#39;&#39;
+        
+        # Save old position in file
+        position = self.filePosition
+        
+        # Go to this frame&#39;s position
+        f.seek(k*self.frameSizeBytes)
+        chunk = self.f.read(self.frameSizeBytes)
+
+        if len(chunk) == self.frameSizeBytes:
+        
+            # Unpack bytes from file
+            im = np.array(struct.unpack(str(self.frameSize)+&#39;H&#39;, chunk))
+            
+            # Reshape it so that it looks like an image
+            im = im.reshape((self.channelSizeX, 
+                             self.channelSizeY*self.channelN))
+            
+            frame = np.empty((self. channelN, self.channelSizeX, 
+                                self.channelSizeY), dtype=np.uint16)
+            # Split the image into the channels
+            for j in np.arange(self.channelN):
+                frame[j] = im[:,j*self.channelSizeX:(j+1)*self.channelSizeX]
+            
+            return Frame
+        else:
+            return False
+        
+        # Go back to the previous position
+        f.seek(position)
+        
+    def load_framesStandAlone(self, startFrame, stopFrame):
+        &#39;&#39;&#39;
+        Returns a stack of consecutive frames in the recording as a numpy array,
+        without storing them in an attribute of the class itself.
+        &#39;&#39;&#39;
+        # Save old position in file
+        position = self.filePosition
+        
+        # Initialize array for the stack
+        stackLength = stopFrame - startFrame
+        stack = np.zeros((self.channelN, stackLength, self.channelSizeX, 
+                          self.channelSizeY), dtype=np.uint16)
+        
+        # Go to this frame&#39;s position
+        f.seek(startFrame*self.frameSizeBytes)
+        
+        for i in np.arange(stackLength): 
+        
+            chunk = self.f.read(self.frameSizeBytes)
+
+            if len(chunk) == self.frameSizeBytes:
+            
+                # Unpack bytes from file
+                im = np.array(struct.unpack(str(self.frameSize)+&#39;H&#39;, chunk))
+                
+                # Reshape it so that it looks like an image
+                im = im.reshape((self.channelSizeX, 
+                                 self.channelSizeY*self.channelN))
+                
+                # Split the image into the channels
+                for j in np.arange(self.channelN):
+                    stack[j,i,...] = \
+                            im[:,j*self.channelSizeX:(j+1)*self.channelSizeX]
+        
+        # Go back to the previous position
+        f.seek(position)</code></pre>
+</details>
+<h3>Class variables</h3>
+<dl>
+<dt id="wormdatamodel.data.recording.channelN"><code class="name">var <span class="ident">channelN</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.channelSize"><code class="name">var <span class="ident">channelSize</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.channelSizeX"><code class="name">var <span class="ident">channelSizeX</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.channelSizeY"><code class="name">var <span class="ident">channelSizeY</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.dt"><code class="name">var <span class="ident">dt</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.filePosition"><code class="name">var <span class="ident">filePosition</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.filenameFrames"><code class="name">var <span class="ident">filenameFrames</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.filenameFramesDetails"><code class="name">var <span class="ident">filenameFramesDetails</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.filenameOptogeneticsTwoPhoton"><code class="name">var <span class="ident">filenameOptogeneticsTwoPhoton</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.filenameOtherFrameSynchronous"><code class="name">var <span class="ident">filenameOtherFrameSynchronous</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.filenameZDetails"><code class="name">var <span class="ident">filenameZDetails</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameBinning"><code class="name">var <span class="ident">frameBinning</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameBitDepth"><code class="name">var <span class="ident">frameBitDepth</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameBufferLock"><code class="name">var <span class="ident">frameBufferLock</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameBufferPosition"><code class="name">var <span class="ident">frameBufferPosition</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameCountOffset"><code class="name">var <span class="ident">frameCountOffset</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameDType"><code class="name">var <span class="ident">frameDType</span></code></dt>
+<dd>
+<div class="desc"><p>Unsigned integer type, compatible with C <code>unsigned short</code>.
+Character code: <code>'H'</code>.
+Canonical name: <code>np.ushort</code>.
+Alias <em>on this platform</em>: <code>np.uint16</code>: 16-bit unsigned integer (0 to 65535).</p></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameLastLoaded"><code class="name">var <span class="ident">frameLastLoaded</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.framePixelOffset"><code class="name">var <span class="ident">framePixelOffset</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.framePixelPerUm"><code class="name">var <span class="ident">framePixelPerUm</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameSize"><code class="name">var <span class="ident">frameSize</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameSizeBytes"><code class="name">var <span class="ident">frameSizeBytes</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameUmPerPixel"><code class="name">var <span class="ident">frameUmPerPixel</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.memorySaturated"><code class="name">var <span class="ident">memorySaturated</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.piezoFrequency"><code class="name">var <span class="ident">piezoFrequency</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="wormdatamodel.data.recording.free_memory"><code class="name flex">
+<span>def <span class="ident">free_memory</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def free_memory(self):
+    del self.frame
+    self.frame = np.array([])</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.get_events"><code class="name flex">
+<span>def <span class="ident">get_events</span></span>(<span>self, shift=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns metadata about events happened during the measurement, like
+optogenetics stimulations. </p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>shift</code></strong> :&ensp;<code>int (optional)</code></dt>
+<dd>Index of the first event to be considered.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>events</code></strong> :&ensp;<code>dict</code></dt>
+<dd>Dictionary containing the metadata. For example,
+events['optogenetics'] is a dictionary with keys 'index', 'strides',
+'properties'. Index is the frame index at which the event happened,
+strides are the number of frames between two events (meant to be
+used with irregular arrays, for example). Properties is a dictionary
+with keys 'type', 'n_pulses', 'rep_rate_divider', 'n_trains',
+'time_btw_trains', 'target', 'target_xy_space', 'target_z_space',
+'target_z_device', 'time'.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_events(self, shift=0):
+    &#39;&#39;&#39;Returns metadata about events happened during the measurement, like
+    optogenetics stimulations. 
+    
+    Parameters
+    ----------
+    shift: int (optional)
+        Index of the first event to be considered.
+    
+    Returns
+    -------
+    events: dict
+        Dictionary containing the metadata. For example,
+        events[&#39;optogenetics&#39;] is a dictionary with keys &#39;index&#39;, &#39;strides&#39;,
+        &#39;properties&#39;. Index is the frame index at which the event happened,
+        strides are the number of frames between two events (meant to be 
+        used with irregular arrays, for example). Properties is a dictionary
+        with keys &#39;type&#39;, &#39;n_pulses&#39;, &#39;rep_rate_divider&#39;, &#39;n_trains&#39;, 
+        &#39;time_btw_trains&#39;, &#39;target&#39;, &#39;target_xy_space&#39;, &#39;target_z_space&#39;,
+        &#39;target_z_device&#39;, &#39;time&#39;.
+    
+    &#39;&#39;&#39;
+    events = {}
+    
+    # OPTOGENETICS
+    I = self.optogeneticsFrameCount.shape[0]
+    
+    # Find the closest frame to the trigger event, in case the exact one
+    # has been dropped.
+    index = np.zeros(I,dtype=np.int32)
+    for i in np.arange(I):
+        d = np.absolute(self.optogeneticsFrameCount[i]+shift-self.frameCount)
+        index[i] = np.argmin(d)
+        
+    if self.rectype == &#34;3d&#34;:
+        index = self.volumeIndex[index]
+        
+    ampl_indices = np.zeros(len(index)+2)
+    ampl_indices[1:-1] = index
+    ampl_indices[-1] = self.nVolume
+    strides = np.diff(ampl_indices)
+        
+    properties = {
+        &#39;type&#39;: &#39;twophoton&#39;,
+        &#39;n_pulses&#39;: self.optogeneticsNPulses,
+        &#39;rep_rate_divider&#39;: self.optogeneticsRepRateDivider,
+        &#39;n_trains&#39;: self.optogeneticsNTrains,
+        &#39;time_btw_trains&#39;: self.optogeneticsTimeBtwTrains,
+        &#39;target&#39;: np.array([
+            self.optogeneticsTargetX,
+            self.optogeneticsTargetY,
+            self.optogeneticsTargetZ
+            ]).T,
+        &#39;target_xy_space&#39;: self.optogeneticsTargetXYSpace,
+        &#39;target_z_space&#39;: self.optogeneticsTargetZSpace,
+        &#39;target_z_device&#39;: self.optogeneticsTargetZDevice,
+        &#39;time&#39;: self.optogeneticsTime
+        }
+    
+     
+    events[&#39;optogenetics&#39;] = {&#39;index&#39;: index, 
+                              &#39;strides&#39;: strides,
+                              &#39;properties&#39;: properties}
+    
+    return events</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.get_volume"><code class="name flex">
+<span>def <span class="ident">get_volume</span></span>(<span>self, i)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the i-th volume, either taking it from the buffer or loading it
+from file.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_volume(self, i):
+    &#39;&#39;&#39;Returns the i-th volume, either taking it from the buffer or loading it
+    from file.
+    &#39;&#39;&#39;
+    #FramesIdx, = np.where(self.stackIdx == i)
+    #firstFrame = FramesIdx[0]
+    #lastFrame = FramesIdx[-1]
+    firstFrame = self.volumeFirstFrame[i]
+    lastFrame = self.volumeFirstFrame[i+1]
+    print(firstFrame,lastFrame)
+    #print(firstFrame,lastFrame)
+    volumeZ = np.zeros(lastFrame-firstFrame)
+    
+    if firstFrame in self.frameBufferIndexes:
+        firstFrame = np.where(self.frameBufferIndexes==firstFrame)[0][0]
+        lastFrame = np.where(self.frameBufferIndexes==lastFrame)[0][0]  
+        vol = wormdm.data.volume(self.frame[firstFrame:lastFrame], 
+                     volumeZ) #[i]
+    else:
+        vol = wormdm.data.volume(self.load_framesStandAlone(firstFrame,lastFrame-1),
+                     volumeZ) #[i]
+                     
+    return vol</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load"><code class="name flex">
+<span>def <span class="ident">load</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load(self, *args, **kwargs):
+    if self.rectype==&#34;3d&#34;:
+        self._load_3d(*args, **kwargs)
+    elif self.rectype==&#34;2d&#34;:
+        self._load_2d(*args, **kwargs)</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_extra"><code class="name flex">
+<span>def <span class="ident">load_extra</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Load metadata for the recording, implicitly choosing the type of
+metadata depending on the recording type (2D or 3D). Loads directly in
+the class variables, does not return anything.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_extra(self):
+    &#39;&#39;&#39;Load metadata for the recording, implicitly choosing the type of
+    metadata depending on the recording type (2D or 3D). Loads directly in
+    the class variables, does not return anything.
+    &#39;&#39;&#39;
+    if self.rectype==&#34;3d&#34;:
+        self._load_extra_3d()
+    elif self.rectype==&#34;2d&#34;:
+        self._load_extra_2d()</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_frame"><code class="name flex">
+<span>def <span class="ident">load_frame</span></span>(<span>self, k, i)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loads next frame from current position in the opened file and stores it
+at the i-th index in the self.frames buffer. Returns True if it
+successfully read a full chunk from the file, False if it did not.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_frame(self, k,i):
+    &#39;&#39;&#39;
+    Loads next frame from current position in the opened file and stores it
+    at the i-th index in the self.frames buffer. Returns True if it
+    successfully read a full chunk from the file, False if it did not.
+    &#39;&#39;&#39;
+    
+    chunk = self.file.read(self.frameSizeBytes)
+    
+    if len(chunk) == self.frameSizeBytes:
+    
+        # Unpack bytes from file
+        im = np.array(struct.unpack(str(self.frameSize)+&#39;H&#39;, chunk))
+        
+        # Reshape it so that it looks like an image
+        im = im.reshape((self.channelSizeX, 
+                         self.channelSizeY*self.channelN))
+        
+        # Split the image into the channels
+        for j in np.arange(self.channelN):
+            self.frame[j,i,...] = \
+                    im[:,j*self.channelSizeX:(j+1)*self.channelSizeX]
+        
+        self.frameBufferIndexes[i] = k
+        
+        return True
+    else:
+        return False</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_frameStandAlone"><code class="name flex">
+<span>def <span class="ident">load_frameStandAlone</span></span>(<span>self, k)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a frame as a numpy array, without storing it in an attribute of
+the class itself.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_frameStandAlone(self, k):
+    &#39;&#39;&#39;
+    Returns a frame as a numpy array, without storing it in an attribute of
+    the class itself.
+    &#39;&#39;&#39;
+    
+    # Save old position in file
+    position = self.filePosition
+    
+    # Go to this frame&#39;s position
+    f.seek(k*self.frameSizeBytes)
+    chunk = self.f.read(self.frameSizeBytes)
+
+    if len(chunk) == self.frameSizeBytes:
+    
+        # Unpack bytes from file
+        im = np.array(struct.unpack(str(self.frameSize)+&#39;H&#39;, chunk))
+        
+        # Reshape it so that it looks like an image
+        im = im.reshape((self.channelSizeX, 
+                         self.channelSizeY*self.channelN))
+        
+        frame = np.empty((self. channelN, self.channelSizeX, 
+                            self.channelSizeY), dtype=np.uint16)
+        # Split the image into the channels
+        for j in np.arange(self.channelN):
+            frame[j] = im[:,j*self.channelSizeX:(j+1)*self.channelSizeX]
+        
+        return Frame
+    else:
+        return False
+    
+    # Go back to the previous position
+    f.seek(position)</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_frames"><code class="name flex">
+<span>def <span class="ident">load_frames</span></span>(<span>self, startFrame=0, frameN=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loads the specified frames into the class buffer, from a file in which
+each frame in each channel is contiguously stored (line0R, line1R, &hellip;,
+line0G, line1G, &hellip;)</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>startFrame</code></strong> :&ensp;<code>int (optional)</code></dt>
+<dd>First frame to load, in the file reference frame (not absolute frame
+count). Default: 0.</dd>
+<dt><strong><code>frameN</code></strong> :&ensp;<code>int (optional)</code></dt>
+<dd>Number of frames to load.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_frames(self, startFrame=0, frameN=0):
+    &#39;&#39;&#39;Loads the specified frames into the class buffer, from a file in which
+    each frame in each channel is contiguously stored (line0R, line1R, ...,
+    line0G, line1G, ...)
+    
+    Parameters
+    ----------
+    startFrame: int (optional)
+        First frame to load, in the file reference frame (not absolute frame
+        count). Default: 0.
+    frameN: int (optional)
+        Number of frames to load.
+    &#39;&#39;&#39;
+    
+    # Open file
+    self.file = open(self.foldername+self.filenameFrames, &#39;br&#39;)
+    # Go to desired start frame
+    self.file.seek(self.frameSizeBytes*startFrame)
+    
+    self.frame = np.fromfile(self.file, dtype=self.frameDType, 
+                    count=frameN*self.frameSize).reshape(
+                    frameN,self.channelN,
+                    self.channelSizeY,self.channelSizeX)
+                    
+    self.filePosition = self.file.tell()
+    # Close file
+    self.file.close()
+    self.frameLastLoaded = startFrame+frameN
+    
+    self.frameBufferIndexes = np.arange(startFrame,
+                                    startFrame+frameN).astype(np.uint32)</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_framesStandAlone"><code class="name flex">
+<span>def <span class="ident">load_framesStandAlone</span></span>(<span>self, startFrame, stopFrame)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a stack of consecutive frames in the recording as a numpy array,
+without storing them in an attribute of the class itself.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_framesStandAlone(self, startFrame, stopFrame):
+    &#39;&#39;&#39;
+    Returns a stack of consecutive frames in the recording as a numpy array,
+    without storing them in an attribute of the class itself.
+    &#39;&#39;&#39;
+    # Save old position in file
+    position = self.filePosition
+    
+    # Initialize array for the stack
+    stackLength = stopFrame - startFrame
+    stack = np.zeros((self.channelN, stackLength, self.channelSizeX, 
+                      self.channelSizeY), dtype=np.uint16)
+    
+    # Go to this frame&#39;s position
+    f.seek(startFrame*self.frameSizeBytes)
+    
+    for i in np.arange(stackLength): 
+    
+        chunk = self.f.read(self.frameSizeBytes)
+
+        if len(chunk) == self.frameSizeBytes:
+        
+            # Unpack bytes from file
+            im = np.array(struct.unpack(str(self.frameSize)+&#39;H&#39;, chunk))
+            
+            # Reshape it so that it looks like an image
+            im = im.reshape((self.channelSizeX, 
+                             self.channelSizeY*self.channelN))
+            
+            # Split the image into the channels
+            for j in np.arange(self.channelN):
+                stack[j,i,...] = \
+                        im[:,j*self.channelSizeX:(j+1)*self.channelSizeX]
+    
+    # Go back to the previous position
+    f.seek(position)</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_frames_legacy"><code class="name flex">
+<span>def <span class="ident">load_frames_legacy</span></span>(<span>self, startFrame=0, frameN=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loads the specified frames into the buffer from a file in which the
+image is stored line0R,line0G,line1R,line1G,&hellip;</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>startFrame</code></strong> :&ensp;<code>int (optional)</code></dt>
+<dd>First frame to load, in the file reference frame (not absolute frame
+count). Default: 0.</dd>
+<dt><strong><code>frameN</code></strong> :&ensp;<code>int (optional)</code></dt>
+<dd>Number of frames to load.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_frames_legacy(self, startFrame=0, frameN=0):
+    &#39;&#39;&#39;Loads the specified frames into the buffer from a file in which the
+    image is stored line0R,line0G,line1R,line1G,...
+    
+    Parameters
+    ----------
+    startFrame: int (optional)
+        First frame to load, in the file reference frame (not absolute frame
+        count). Default: 0.
+    frameN: int (optional)
+        Number of frames to load.
+    &#39;&#39;&#39;
+    
+    # Pre-allocate the memory for the frames          
+    self.frame = np.empty((frameN,self.channelN,
+                           self.channelSizeY,self.channelSizeX),
+                           dtype=np.uint16)
+    # Load                       
+    wormdm.data.load_frames_legacy(self.foldername+self.filenameFrames, 
+                               (np.int32)(startFrame), (np.int32)(frameN), 
+                               (np.int32)(self.channelSizeX), 
+                               (np.int32)(self.channelSizeY),
+                               self.frame)
+    
+    self.frameLastLoaded = startFrame+frameN
+    
+    self.frameBufferIndexes = np.arange(startFrame,
+                                    startFrame+frameN).astype(np.uint32)</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_frames_onebyone"><code class="name flex">
+<span>def <span class="ident">load_frames_onebyone</span></span>(<span>self, startFrame=0, stopFrame=-1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loads the specified frames into the buffer.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_frames_onebyone(self, startFrame=0, stopFrame=-1):
+    &#39;&#39;&#39;
+    Loads the specified frames into the buffer.
+    &#39;&#39;&#39;
+    
+    # Go to desired start frame
+    self.file.seek(self.frameSizeBytes*startFrame)
+    
+    i = 0
+    while self.load_frame( startFrame + i,
+            (self.frameBufferPosition + i) % self.frameBufferSize ):
+        i += 1
+        if stopFrame != -1 and i == (stopFrame-startFrame): break
+
+    # Update the variables storing the positions in the file and in the 
+    # buffer. TODO controlla questi i+1
+    self.frameBufferPosition = (self.frameBufferPosition + i +1) % \
+                               self.frameBufferSize
+    
+    self.filePosition = self.file.tell()
+    self.frameLastLoaded = startFrame + i</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_optogenetics"><code class="name flex">
+<span>def <span class="ident">load_optogenetics</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Load optogenetics metadata. Automatically detects a couple of
+saving configurations, that have changed in time.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_optogenetics(self):
+    &#39;&#39;&#39;Load optogenetics metadata. Automatically detects a couple of 
+    saving configurations, that have changed in time.
+    &#39;&#39;&#39;
+    if os.path.isfile(self.foldername+self.filenameOptogeneticsTwoPhoton):
+        self.optogeneticsType = &#34;twoPhoton&#34;
+        optogeneticsF = open(self.foldername+self.filenameOptogeneticsTwoPhoton)
+        Line = optogeneticsF.readlines()
+        optogeneticsF.close()
+        if Line[0] == &#34;frameCount\tnPulses\trepRateDivider\toptogTargetX\toptogTargetY\toptogTargetZ\toptogTargetXYSpace\toptogTargetZSpace\toptogTargetZDevice\tTime\n&#34;:
+            Line.pop(0)
+            if Line[-1]==&#34;&#34;: Line.pop(-1)
+            self.optogeneticsN = len(Line)
+            self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsTargetX = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetY = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetZ = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetXYSpace = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTargetZSpace = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTargetZDevice = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTime = [&#34;None&#34;]*self.optogeneticsN
+            
+            #These won&#39;t be populated in this case
+            self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
+            
+            for i in np.arange(self.optogeneticsN):
+                line = Line[i]
+                sline = line.split(&#34;\t&#34;)
+                self.optogeneticsFrameCount[i] = int(sline[0])
+                self.optogeneticsNPulses[i] = int(sline[1])
+                self.optogeneticsRepRateDivider[i] = int(sline[2])
+                self.optogeneticsTargetX[i] = float(sline[3])
+                self.optogeneticsTargetY[i] = float(sline[4])
+                self.optogeneticsTargetZ[i] = float(sline[5])
+                self.optogeneticsTargetXYSpace[i] = sline[6]
+                self.optogeneticsTargetZSpace[i] = sline[7]
+                self.optogeneticsTargetZDevice[i] = sline[8]
+                self.optogeneticsTime[i] = sline[9]
+                
+        elif Line[0] == &#34;frameCount\tnPulses\trepRateDivider\tnTrains\ttimeBtwTrains\toptogTargetX\toptogTargetY\toptogTargetZ\toptogTargetXYSpace\toptogTargetZSpace\toptogTargetZDevice\tTime\n&#34;:
+            Line.pop(0)
+            if Line[-1]==&#34;&#34;: Line.pop(-1)
+            self.optogeneticsN = len(Line)
+            self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetX = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetY = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetZ = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetXYSpace = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTargetZSpace = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTargetZDevice = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTime = [&#34;None&#34;]*self.optogeneticsN
+            
+            for i in np.arange(self.optogeneticsN):
+                line = Line[i]
+                sline = line.split(&#34;\t&#34;)
+                self.optogeneticsFrameCount[i] = int(sline[0])
+                self.optogeneticsNPulses[i] = int(sline[1])
+                self.optogeneticsRepRateDivider[i] = int(sline[2])
+                self.optogeneticsNTrains[i] = int(sline[3])
+                self.optogeneticsTimeBtwTrains[i] = float(sline[4])
+                self.optogeneticsTargetX[i] = float(sline[5])
+                self.optogeneticsTargetY[i] = float(sline[6])
+                self.optogeneticsTargetZ[i] = float(sline[7])
+                self.optogeneticsTargetXYSpace[i] = sline[8]
+                self.optogeneticsTargetZSpace[i] = sline[9]
+                self.optogeneticsTargetZDevice[i] = sline[10]
+                self.optogeneticsTime[i] = sline[11]
+    
+    else:
+        self.optogeneticsType = &#34;None&#34;</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="wormdatamodel.data.volume"><code class="flex name class">
+<span>class <span class="ident">volume</span></span>
+<span>(</span><span>frames, z, dx=0.4, dy=0.4)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class volume:
+    
+    def __init__(self, frames, z, dx=0.4, dy=0.4):
+        self.frames = frames
+        self.dx = dx
+        self.dy = dy
+        self.z = z
+        
+    def plot(self, wait=False):
+        mf.plt.hyperstack(self.frames, order=&#39;zc&#39;, cmap=&#39;viridis&#39;, wait=wait)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="wormdatamodel.data.volume.plot"><code class="name flex">
+<span>def <span class="ident">plot</span></span>(<span>self, wait=False)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def plot(self, wait=False):
+    mf.plt.hyperstack(self.frames, order=&#39;zc&#39;, cmap=&#39;viridis&#39;, wait=wait)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="wormdatamodel" href="../index.html">wormdatamodel</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-submodules">Sub-modules</a></h3>
+<ul>
+<li><code><a title="wormdatamodel.data.redtogreen" href="redtogreen.html">wormdatamodel.data.redtogreen</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="wormdatamodel.data.recording" href="#wormdatamodel.data.recording">recording</a></code></h4>
+<ul class="">
+<li><code><a title="wormdatamodel.data.recording.channelN" href="#wormdatamodel.data.recording.channelN">channelN</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.channelSize" href="#wormdatamodel.data.recording.channelSize">channelSize</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.channelSizeX" href="#wormdatamodel.data.recording.channelSizeX">channelSizeX</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.channelSizeY" href="#wormdatamodel.data.recording.channelSizeY">channelSizeY</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.dt" href="#wormdatamodel.data.recording.dt">dt</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.filePosition" href="#wormdatamodel.data.recording.filePosition">filePosition</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.filenameFrames" href="#wormdatamodel.data.recording.filenameFrames">filenameFrames</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.filenameFramesDetails" href="#wormdatamodel.data.recording.filenameFramesDetails">filenameFramesDetails</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.filenameOptogeneticsTwoPhoton" href="#wormdatamodel.data.recording.filenameOptogeneticsTwoPhoton">filenameOptogeneticsTwoPhoton</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.filenameOtherFrameSynchronous" href="#wormdatamodel.data.recording.filenameOtherFrameSynchronous">filenameOtherFrameSynchronous</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.filenameZDetails" href="#wormdatamodel.data.recording.filenameZDetails">filenameZDetails</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameBinning" href="#wormdatamodel.data.recording.frameBinning">frameBinning</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameBitDepth" href="#wormdatamodel.data.recording.frameBitDepth">frameBitDepth</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameBufferLock" href="#wormdatamodel.data.recording.frameBufferLock">frameBufferLock</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameBufferPosition" href="#wormdatamodel.data.recording.frameBufferPosition">frameBufferPosition</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameCountOffset" href="#wormdatamodel.data.recording.frameCountOffset">frameCountOffset</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameDType" href="#wormdatamodel.data.recording.frameDType">frameDType</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameLastLoaded" href="#wormdatamodel.data.recording.frameLastLoaded">frameLastLoaded</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.framePixelOffset" href="#wormdatamodel.data.recording.framePixelOffset">framePixelOffset</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.framePixelPerUm" href="#wormdatamodel.data.recording.framePixelPerUm">framePixelPerUm</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameSize" href="#wormdatamodel.data.recording.frameSize">frameSize</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameSizeBytes" href="#wormdatamodel.data.recording.frameSizeBytes">frameSizeBytes</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameUmPerPixel" href="#wormdatamodel.data.recording.frameUmPerPixel">frameUmPerPixel</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.free_memory" href="#wormdatamodel.data.recording.free_memory">free_memory</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.get_events" href="#wormdatamodel.data.recording.get_events">get_events</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.get_volume" href="#wormdatamodel.data.recording.get_volume">get_volume</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load" href="#wormdatamodel.data.recording.load">load</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_extra" href="#wormdatamodel.data.recording.load_extra">load_extra</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_frame" href="#wormdatamodel.data.recording.load_frame">load_frame</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_frameStandAlone" href="#wormdatamodel.data.recording.load_frameStandAlone">load_frameStandAlone</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_frames" href="#wormdatamodel.data.recording.load_frames">load_frames</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_framesStandAlone" href="#wormdatamodel.data.recording.load_framesStandAlone">load_framesStandAlone</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_frames_legacy" href="#wormdatamodel.data.recording.load_frames_legacy">load_frames_legacy</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_frames_onebyone" href="#wormdatamodel.data.recording.load_frames_onebyone">load_frames_onebyone</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_optogenetics" href="#wormdatamodel.data.recording.load_optogenetics">load_optogenetics</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.memorySaturated" href="#wormdatamodel.data.recording.memorySaturated">memorySaturated</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.piezoFrequency" href="#wormdatamodel.data.recording.piezoFrequency">piezoFrequency</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="wormdatamodel.data.volume" href="#wormdatamodel.data.volume">volume</a></code></h4>
+<ul class="">
+<li><code><a title="wormdatamodel.data.volume.plot" href="#wormdatamodel.data.volume.plot">plot</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.3</a>.</p>
+</footer>
+</body>
+</html>
