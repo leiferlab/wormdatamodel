@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 foldername = "/tigress/LEIFER/francesco/pumpprobe/immobilizationtest/REDGREEN_objectivesregistration_20190717_094840/"
 
 def redToGreen(Cervelli_R, source="LabView", folder=foldername):
-    '''
-    Transforms coordinates from the red to the green part of the image. The
+    '''Transforms coordinates from the red to the green part of the image. The
     transformation is purely 2D, the z coordinates are untouched.
     
     Parameters

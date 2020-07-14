@@ -4,7 +4,44 @@ import json
 import wormdatamodel as wormdm
 
 class recording:
+    '''Class representing a sequence of images/frames in time. The images can be
+    composed of multiple channels (although the implementation currently has
+    this hardcoded to 2 channels), and the sequence can be a simple video or
+    a volumetric recording.
+    
+    At initialization, only the metadata of the recording is loaded, so that
+    the class can be used in a lightweight mode.  Once the object is created, 
+    the frames can be loaded in memory with the method load() passing 
+    startFrame and stopFrame or, more commonly, startVolume and nVolume.
+    
+    Given that the frames can take up a lot of memory, the class can be used
+    with contexts as in::
+        with wormdatamodel.data.recording(folder) as rec:
+            rec.load(startVolume=i, nVolume=N)
+    so that memory is freed once the script exits the context. Alternatively,
+    the memory associated with the frame buffer can be freed manually using
+    the method free_memory(). 
+    
+    Below, some useful attributes and methods (the list is not complete).
+    
+    Attributes
+    ----------
+    frame: numpy array
+        Contains the loaded frames.
+    volumeFirstFrame: numpy array 
+        Array with the indices of the first frames of each volume
+    ZZ: list of numpy arrays 
+        Contains the z coordinate of the frames in each volume.
 
+    Methods
+    -------
+    load(startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, jobMaxMemory=100*2**30)
+        Loads the frames according to parameters passed.
+    get_events(self, shift=0):
+        Returns metadata about events happened during the measurement, like
+        optogenetics stimulations. 
+    
+    '''
     # Acquisition parameters
     dt = 0.005
     piezoFrequency = 3.0
@@ -44,9 +81,33 @@ class recording:
     filenameOptogeneticsTwoPhoton = "pharosTriggers.txt"
     
     def __init__(self, foldername, legacy=False, rectype=None, settings={}):
-        '''
-        Class constructor: Do not load all the data from the constructor, so 
-        that the class can be used also in a light-weight mode.
+        '''Class constructor: Does not load all the data, so that the class can 
+        be used also in a light-weight mode. If the recording type (2d or 3d) is
+        not specified, the constructor determines it based on the file
+        structure, then loads the metadata of the recording (including the data
+        relative to optogenetics stimulations, if present).
+        
+        Parameters
+        ----------
+        foldername: string
+            Folder containing the recording. The file names must follow the
+            convention detailed by the default values of the filename
+            attributes.
+        legacy: bool (optional)
+            Set to True if the recording was taken on the old whole brain 
+            imager. This is needed, e.g., to determine how the frames are stored
+            in the file, with each frame in each channel being contiguous
+            (legacy=False) or with line0R,line0G,line1R,line1G... 
+            Default: False.
+        rectype: string (optional)
+            Can be "3d" or "2d". If it is not set, the constructor tries to
+            determine it based on the file structure. Default: None.
+        settings: dict (optional)
+            Contains additional settings. Currently only the key "latencyShift"
+            is used, which specifies if there is a delay between the z position
+            of the device used (piezo motor or tunable lens) and its monitor
+            output. It depends, e.g., on whether the piezo and the objective
+            are mounted vertically or horizontally.
         '''
         if foldername[-1] == "/":
             self.foldername = foldername
@@ -98,6 +159,31 @@ class recording:
     
     def _load_3d(self, startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, 
                 jobMaxMemory=100*2**30):
+        '''Load the frames from a 3D recording. Specify either start and stop
+        frames or start and number of volumes. Will not load anything if the
+        estimated memory usage exceeds the maximum job memory limit. 
+        All parameters are optional. If nothing is passed, the
+        function attempts to load the whole file.
+        
+        The frames are directly loaded in self.frame and not returned.
+        
+        Parameters
+        ----------
+        startFrame: int (optional)
+            First frame to load, in the file reference frame (not absolute
+            frame index). Used only if nVolume is not set. Default: 0.
+        stopFrame: int (optional)
+            Last frame to load, in the file reference frame (not absolute 
+            frame index). Used only if nVolume is not set. 
+            Default: -1, i.e. until end of file.
+        startVolume: int (optional)
+            First volume to load. The 0th volume is the first complete volume
+            in the recording. Used only if nVolume is set. Default: 0.
+        nVolume: int (optional)
+            Number of volumes to load. Default: -1, corresponding to not set.
+        jobMaxMemory: scalar (optional)
+            Sets the limit of memory that can be used. Default: 100 GB.
+        '''
         
         if nVolume!=-1:
             startFrame = self.volumeFirstFrame[startVolume]
@@ -149,6 +235,34 @@ class recording:
         #self.frameBufferLocks = np.zeros(self.frameBufferSize, dtype=np.bool)
         
     def _load_2d(self, startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, jobMaxMemory=100*2**30):
+        '''Load the frames from a 2D recording. Specify either start and stop
+        frames or start and number of volumes. In this case, the volume notation
+        is provided to keep a uniform notation across 2D and 3D recordings.
+        Each frame corresponds to one volume. Will not load anything if the
+        estimated memory usage exceeds the maximum job memory limit. 
+        All parameters are optional. If nothing is passed, the
+        function attempts to load the whole file.
+        
+        The frames are directly loaded in self.frame and not returned.
+        
+        Parameters
+        ----------
+        startFrame: int (optional)
+            First frame to load, in the file reference frame (not absolute
+            frame index). Used only if nVolume is not set. Default: 0.
+        stopFrame: int (optional)
+            Last frame to load, in the file reference frame (not absolute 
+            frame index). Used only if nVolume is not set. 
+            Default: -1, i.e. until end of file.
+        startVolume: int (optional)
+            First volume to load. The 0th volume is the first complete volume
+            in the recording. Used only if nVolume is set. Default: 0.
+        nVolume: int (optional)
+            Number of volumes to load. Default: -1, corresponding to not set.
+        jobMaxMemory: scalar (optional)
+            Sets the limit of memory that can be used. Default: 100 GB.
+        '''
+        
         
         if nVolume != -1:
             startFrame = startVolume
@@ -189,9 +303,19 @@ class recording:
             
         
     def load_frames(self, startFrame=0, frameN=0):
+        '''Loads the specified frames into the class buffer, from a file in which
+        each frame in each channel is contiguously stored (line0R, line1R, ...,
+        line0G, line1G, ...)
+        
+        Parameters
+        ----------
+        startFrame: int (optional)
+            First frame to load, in the file reference frame (not absolute frame
+            count). Default: 0.
+        frameN: int (optional)
+            Number of frames to load.
         '''
-        Loads the specified frames into the buffer.
-        '''
+        
         # Open file
         self.file = open(self.foldername+self.filenameFrames, 'br')
         # Go to desired start frame
@@ -211,9 +335,16 @@ class recording:
                                         startFrame+frameN).astype(np.uint32)
                                         
     def load_frames_legacy(self, startFrame=0, frameN=0):
-        '''
-        Loads the specified frames into the buffer from a file in which the
+        '''Loads the specified frames into the buffer from a file in which the
         image is stored line0R,line0G,line1R,line1G,...
+        
+        Parameters
+        ----------
+        startFrame: int (optional)
+            First frame to load, in the file reference frame (not absolute frame
+            count). Default: 0.
+        frameN: int (optional)
+            Number of frames to load.
         '''
         
         # Pre-allocate the memory for the frames          
@@ -233,14 +364,19 @@ class recording:
                                         startFrame+frameN).astype(np.uint32)
                                         
     def load_extra(self):
+        '''Load metadata for the recording, implicitly choosing the type of
+        metadata depending on the recording type (2D or 3D). Loads directly in
+        the class variables, does not return anything.
+        '''
         if self.rectype=="3d":
             self._load_extra_3d()
         elif self.rectype=="2d":
             self._load_extra_2d()
         
     def _load_extra_3d(self):
-        '''
-        Load extra information recorded.
+        '''Load metadata for 3D recordings. The function builds a correspondence
+        between frame index in the file reference frame and the absolute frame
+        count, assigns each frame to a volume, and to a z position.
         '''
         # Load the details of the frames that are downloaded from the camera
         # together with the frames: for each frame in the sequence of saved
@@ -360,6 +496,11 @@ class recording:
         #self.stackIdx = self.stackIdx.reshape(self.stackIdx.shape[0])
         
     def _load_extra_2d(self):
+        '''Load metadata for a 2D recording. The function loads an absolute time
+        axis, the absolute frame counts, and counts the number of volumes,
+        with each volume being one single frame.
+        '''
+        
         framesDetails = np.loadtxt(self.foldername+self.filenameFramesDetails,skiprows=1).T
         self.T = framesDetails[0]
         a, b = np.unique(np.diff(self.T), return_counts=True)
@@ -369,6 +510,9 @@ class recording:
         
         
     def load_optogenetics(self):
+        '''Load optogenetics metadata. Automatically detects a couple of 
+        saving configurations, that have changed in time.
+        '''
         if os.path.isfile(self.foldername+self.filenameOptogeneticsTwoPhoton):
             self.optogeneticsType = "twoPhoton"
             optogeneticsF = open(self.foldername+self.filenameOptogeneticsTwoPhoton)
@@ -389,6 +533,10 @@ class recording:
                 self.optogeneticsTargetZDevice = ["None"]*self.optogeneticsN
                 self.optogeneticsTime = ["None"]*self.optogeneticsN
                 
+                #These won't be populated in this case
+                self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
+                
                 for i in np.arange(self.optogeneticsN):
                     line = Line[i]
                     sline = line.split("\t")
@@ -402,12 +550,45 @@ class recording:
                     self.optogeneticsTargetZSpace[i] = sline[7]
                     self.optogeneticsTargetZDevice[i] = sline[8]
                     self.optogeneticsTime[i] = sline[9]
+                    
+            elif Line[0] == "frameCount\tnPulses\trepRateDivider\tnTrains\ttimeBtwTrains\toptogTargetX\toptogTargetY\toptogTargetZ\toptogTargetXYSpace\toptogTargetZSpace\toptogTargetZDevice\tTime\n":
+                Line.pop(0)
+                if Line[-1]=="": Line.pop(-1)
+                self.optogeneticsN = len(Line)
+                self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
+                self.optogeneticsTargetX = np.zeros(self.optogeneticsN)
+                self.optogeneticsTargetY = np.zeros(self.optogeneticsN)
+                self.optogeneticsTargetZ = np.zeros(self.optogeneticsN)
+                self.optogeneticsTargetXYSpace = ["None"]*self.optogeneticsN
+                self.optogeneticsTargetZSpace = ["None"]*self.optogeneticsN
+                self.optogeneticsTargetZDevice = ["None"]*self.optogeneticsN
+                self.optogeneticsTime = ["None"]*self.optogeneticsN
+                
+                for i in np.arange(self.optogeneticsN):
+                    line = Line[i]
+                    sline = line.split("\t")
+                    self.optogeneticsFrameCount[i] = int(sline[0])
+                    self.optogeneticsNPulses[i] = int(sline[1])
+                    self.optogeneticsRepRateDivider[i] = int(sline[2])
+                    self.optogeneticsNTrains[i] = int(sline[3])
+                    self.optogeneticsTimeBtwTrains[i] = float(sline[4])
+                    self.optogeneticsTargetX[i] = float(sline[5])
+                    self.optogeneticsTargetY[i] = float(sline[6])
+                    self.optogeneticsTargetZ[i] = float(sline[7])
+                    self.optogeneticsTargetXYSpace[i] = sline[8]
+                    self.optogeneticsTargetZSpace[i] = sline[9]
+                    self.optogeneticsTargetZDevice[i] = sline[10]
+                    self.optogeneticsTime[i] = sline[11]
+        
         else:
             self.optogeneticsType = "None"
             
     def _get_memoryEstimatedUsage(self):
-        '''
-        You will need memory for:
+        '''Returns the estimated memory usage for the class, based on:
         - the buffer itself, for the volumes on which
         - the parallel for will be working on
         '''
@@ -420,8 +601,7 @@ class recording:
         return nFrameInVol*self.frameSizeBytes*1.3
         
     def get_volume(self, i):
-        '''
-        Returns the i-th volume, either taking it from the buffer or loading it
+        '''Returns the i-th volume, either taking it from the buffer or loading it
         from file.
         '''
         #FramesIdx, = np.where(self.stackIdx == i)
@@ -445,6 +625,27 @@ class recording:
         return vol
         
     def get_events(self, shift=0):
+        '''Returns metadata about events happened during the measurement, like
+        optogenetics stimulations. 
+        
+        Parameters
+        ----------
+        shift: int (optional)
+            Index of the first event to be considered.
+        
+        Returns
+        -------
+        events: dict
+            Dictionary containing the metadata. For example,
+            events['optogenetics'] is a dictionary with keys 'index', 'strides',
+            'properties'. Index is the frame index at which the event happened,
+            strides are the number of frames between two events (meant to be 
+            used with irregular arrays, for example). Properties is a dictionary
+            with keys 'type', 'n_pulses', 'rep_rate_divider', 'n_trains', 
+            'time_btw_trains', 'target', 'target_xy_space', 'target_z_space',
+            'target_z_device', 'time'.
+        
+        '''
         events = {}
         
         # OPTOGENETICS
@@ -469,6 +670,8 @@ class recording:
             'type': 'twophoton',
             'n_pulses': self.optogeneticsNPulses,
             'rep_rate_divider': self.optogeneticsRepRateDivider,
+            'n_trains': self.optogeneticsNTrains,
+            'time_btw_trains': self.optogeneticsTimeBtwTrains,
             'target': np.array([
                 self.optogeneticsTargetX,
                 self.optogeneticsTargetY,

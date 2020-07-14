@@ -13,7 +13,26 @@ static PyObject *load_frames_legacy(PyObject *self, PyObject *args);
 
 // The module's method table
 static PyMethodDef _legacy_cMethods[] = {
-    {"load_frames_legacy", load_frames_legacy, METH_VARARGS, ""},
+    {"load_frames_legacy", load_frames_legacy, METH_VARARGS, 
+    "Reads frames from a file containing double-channel images, in which the \
+    lines of each channel in each frame are not stored contiguously, \
+    e.g. line0R, line0G, line1R, line1G, ...\
+    \
+    Parameters\
+    ----------\
+    fname: string\
+        Filename.\
+    startFrame: int\
+        Index of the first frame to read, in the file reference frame.\
+    frameN: int\
+        Number of frames to read.\
+    rowSize: int\
+        Number of pixels in each line (of one channel).\
+    rowN: int\
+        Number of rows in each channel.\
+    frames_o: numpy array\
+        Array in which to store the read frames.\
+    "},
     {NULL, NULL, 0, NULL}
 };
 

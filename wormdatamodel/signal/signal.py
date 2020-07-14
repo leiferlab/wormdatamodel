@@ -1,3 +1,5 @@
+# Authors: Milena Chakraverti-Wuerthwein and Francesco Randi
+
 import numpy as np
 import matplotlib.pyplot as plt
 import mistofrutta.struct.irrarray as irrarray
@@ -8,6 +10,16 @@ import warnings
 import sys
 
 class Signal:
+    '''Class representing signal extracted from recording. It supports irregular
+    striding of the signal, useful for recordings with associated events, like
+    optogenetics stimulations. The metadata about the irregular strides can be 
+    obtained via the recording.get_events() method.
+    
+    The class provides some preprocessing functionalities, like 
+    nan-interpolation, smoothing, and in the future will provide photobleaching
+    correction, with the goal of abstracting all this away from the scripts
+    analysing the signal.    
+    '''
 
     nan_mask = np.zeros(1) # where nans
     data = np.empty((0,0)); # data array; either ndarray or irrarray
@@ -15,6 +27,26 @@ class Signal:
     whichSkip = dict(zip([],[])); # which strides should be ignored
     
     def __init__(self,data,info,strides = [], strideNames = [], strideSkip = [], preprocess = True):
+        '''Constructor for the class. 
+        
+        Parameters
+        ----------
+        data: numpy array
+            2D array containing the data. The outermost axis has to be the one
+            that gets strided irregularly.
+        info: dict
+            Dictionary containing the metadata about how the signal has been
+            extracted from the frames.
+        strides: list of numpy arrays (optional)
+            Usually, the ones returned from recording.get_events().
+            See documentation for the irregular array. Default: empty.
+        strideNames: list of strings (optional)
+            See documentation for the irregular array. Default: empty.
+        strideSkip: list of integers (optional)
+            Number of strides to skip at the beginning. Default: empty.
+        preprocess: bool
+            Apply the preprocessing to the signal. Default: True.        
+        '''
         
         NS = 4; # smoothing parameter
         
@@ -50,6 +82,18 @@ class Signal:
     
     @classmethod
     def from_file(cls,folder,filename,*args,**kwargs):
+        '''Creates an instance of the class loading the data from file.
+        
+        Parameters
+        ----------
+        folder: str
+            Folder containing the file.
+        filename: str
+            Name of the file containing the signal array.
+        *args, **kwargs
+            Any other parameter to be passed to the constructor.
+        '''
+            
         # read in data; rows = time, columns = neuron
         data, info = wormdm.signal.from_file(folder,filename)
         # adjusting the shape so that even if only one neuron, still has "columns"
@@ -64,7 +108,7 @@ class Signal:
     ##### Pre-processing Functions #####
     
     def interpolate_nans(self):
-        # replace nans with an interpolated value
+        '''Replace nans with an interpolated value.'''
         interpolated = np.copy(self.data)
         
         for i in np.arange(self.data.shape[1]):
@@ -79,6 +123,13 @@ class Signal:
         return interpolated
     
     def smooth(self, n):
+        '''Smooth the signal with a rectangular filter.
+        
+        Parameters
+        ----------
+        n: int
+            Width of the rectangular filter.        
+        '''
         sm = np.ones(n)/n
         smoothed = np.copy(self.data)    
         
@@ -90,6 +141,24 @@ class Signal:
     ##### Additional Capabilities #####
     
     def trim(self,strideName, adjust = None):
+        '''If the signal is an irregular array, trim it to make the regularize
+        the stride along the irregular axis.
+        
+        Parameters
+        ----------
+        strideName: string
+            Name of the stride along which to trim.
+        adjust: int
+            Number of points to average to subtract the background.
+            
+        Returns
+        -------
+        trimmed: irregular array
+            Irregular array that has now effectively a regular stride. 
+            trimmed.data can now be copied and reshaped into a multidimensional
+            numpy array.        
+        '''
+        
         try:
             start = self.data.firstIndex[strideName];
             strideLength = np.diff(start);
@@ -124,6 +193,24 @@ class Signal:
         return trimmed
         
     def average(self,strideName, adjust = None):
+        '''Average the signal over an irregular stride. The function first
+        obtains the trimmed version of the array along that stride, subtracts
+        the background, and averages across the events.
+        
+        Parameters
+        ----------
+        strideName: str
+            Name of the irregular stride.
+        adjust: int
+            Number of points to average for the background subtraction.
+            
+        Returns
+        -------
+        avg: numpy array
+            Array containing the average over the specified stride.
+        
+        '''
+        
         # adjust tells you how many points to average as a baseline to subtract out
         try:
             trimmed = self.trim(strideName, adjust = adjust);
@@ -142,19 +229,13 @@ class Signal:
         return deepcopy(self)
         
     def __getitem__(self, i):
-        '''
-        Allow for direct indexing of the class to access the data.
-        '''
+        '''Allow for direct indexing of the class to access the data.'''
         return self.data.__getitem__(i)
         
     def __setitem__(self, i, value):
-        '''
-        Allow for direct indexing of the class to write in the data.
-        '''
+        '''Allow for direct indexing of the class to write in the data.'''
         self.data.__setitem__(i,value)
         
     def __call__(self, *args, **kwargs):
-        '''
-        Upon call, use the __call__ method of the data irrarray.
-        '''
+        '''Upon call, use the __call__ method of the data irrarray.'''
         return self.data.__call__(*args, **kwargs)
