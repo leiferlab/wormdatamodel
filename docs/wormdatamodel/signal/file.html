@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.8.3" />
 <title>wormdatamodel.signal.file API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Functions related to saving and loading of signal arrays to and from files.
+The numpy savetxt and loadtxt are used, in addition to a header containing …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin>
@@ -22,11 +23,26 @@
 <h1 class="title">Module <code>wormdatamodel.signal.file</code></h1>
 </header>
 <section id="section-intro">
+<p>Functions related to saving and loading of signal arrays to and from files.
+The numpy savetxt and loadtxt are used, in addition to a header containing the
+json-serialized information about how the signal was extracted.</p>
+<h2 id="imports">Imports</h2>
+<p>numpy, wormdatamodel, pkg_resources, json</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import numpy as np
+<pre><code class="python">&#39;&#39;&#39;
+Functions related to saving and loading of signal arrays to and from files.
+The numpy savetxt and loadtxt are used, in addition to a header containing the
+json-serialized information about how the signal was extracted.
+
+Imports
+-------
+numpy, wormdatamodel, pkg_resources, json
+&#39;&#39;&#39;
+
+import numpy as np
 import wormdatamodel as wormdm
 import pkg_resources
 import json
@@ -325,7 +341,9 @@ Default: {}.</dd>
 <nav id="sidebar">
 <h1>Index</h1>
 <div class="toc">
-<ul></ul>
+<ul>
+<li><a href="#imports">Imports</a></li>
+</ul>
 </div>
 <ul id="index">
 <li><h3>Super-module</h3>

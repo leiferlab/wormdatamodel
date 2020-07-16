@@ -22,29 +22,67 @@ class recording:
     the memory associated with the frame buffer can be freed manually using
     the method free_memory(). 
     
-    Below, some useful attributes and methods (the list is not complete).
-    
+    Useful methods
+    --------------
+    load(): to load frames, and get_events(): to return metadata about events 
+    that happened during the measurement, like optogenetics stimulations. See
+    methods documentation for more details
+        
     Attributes
     ----------
     frame: numpy array
-        Contains the loaded frames.
+        Contains the loaded frames currently in memory.
+    frameN: int
+        Number of frames in memory.
+    frameTime: numpy array
+        Time of each frame in the whole recording (in the whole file, not only 
+        in memory).
+    frameCount: numpy array
+        Absolute index (count) of the frames in the whole recording.
+    Z: numpy array
+        z position of each frame in the whole recording. For a volume-split 
+        version of this array, see ZZ.
+    nVolume: int
+        Number of volumes in the whole recording .
+    volumeIndex: numpy array
+        Index of the volume to which each frame (in the whole recording) belongs
+        to.
     volumeFirstFrame: numpy array 
-        Array with the indices of the first frames of each volume
+        Array with the indices of the first frames of each volume.
+    volumeDirection: numpy array
+        Direction of each volume in the whole recording (upwards or downwards
+        scan).
     ZZ: list of numpy arrays 
-        Contains the z coordinate of the frames in each volume.
+        Contains the z coordinate of the frames in each volume. Index as
+        ZZ[volume_index][frame_index_in_volume].
+    optogenetics: various
+        Attributes with names starting with optogenetics contain details about
+        optogenetics stimulations. They are better accessed through the method
+        get_events() (see below), which returns a dictionary containing that
+        information.
 
-    Methods
-    -------
-    load(startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, jobMaxMemory=100*2**30)
-        Loads the frames according to parameters passed.
-    get_events(self, shift=0):
-        Returns metadata about events happened during the measurement, like
-        optogenetics stimulations. 
-    
     '''
+    
+    # Frame buffer and other useful attributes
+    frame = np.array([])
+    frameN = 0   
+     
+    frameTime = np.array([])
+    frameCount = np.array([])
+    Z = np.array([])
+    
+    nVolume = 0
+    volumeIndex = np.array([])
+    volumeFirstFrame = np.array([])
+    volumeDirection = np.array([])
+    ZZ = []  
+    
     # Acquisition parameters
     dt = 0.005
     piezoFrequency = 3.0
+    latencyShift = 0
+    rectype = None
+    legacy = None
     
     channelSizeX = np.uint16
     channelSizeY = np.uint16
@@ -74,16 +112,33 @@ class recording:
     filePosition = 0
     
     # Conventions on filenames
+    foldername = None
+    filename = None
     filenameFrames = "sCMOS_Frames_U16_1024x512.dat" #'frames_1024x512xU16.dat'
     filenameFramesDetails = "framesDetails.txt"
     filenameOtherFrameSynchronous  = "other-frameSynchronous.txt"
     filenameZDetails = "zScan.json"
     filenameOptogeneticsTwoPhoton = "pharosTriggers.txt"
     
+    # Optogenetics
+    optogeneticsN = 0
+    optogeneticsFrameCount = np.zeros(optogeneticsN, dtype=np.int)
+    optogeneticsNPulses = np.zeros(optogeneticsN, dtype=np.int)
+    optogeneticsRepRateDivider = np.zeros(optogeneticsN, dtype=np.int)
+    optogeneticsNTrains = np.zeros(optogeneticsN, dtype=np.int)
+    optogeneticsTimeBtwTrains = np.zeros(optogeneticsN)
+    optogeneticsTargetX = np.zeros(optogeneticsN)
+    optogeneticsTargetY = np.zeros(optogeneticsN)
+    optogeneticsTargetZ = np.zeros(optogeneticsN)
+    optogeneticsTargetXYSpace = ["None"]*optogeneticsN
+    optogeneticsTargetZSpace = ["None"]*optogeneticsN
+    optogeneticsTargetZDevice = ["None"]*optogeneticsN
+    optogeneticsTime = ["None"]*optogeneticsN
+    
     def __init__(self, foldername, legacy=False, rectype=None, settings={}):
-        '''Class constructor: Does not load all the data, so that the class can 
-        be used also in a light-weight mode. If the recording type (2d or 3d) is
-        not specified, the constructor determines it based on the file
+        '''The class constructor does not load all the data, so that the class 
+        can be used also in a light-weight mode. If the recording type (2d or 
+        3d) is not specified, the constructor determines it based on the file
         structure, then loads the metadata of the recording (including the data
         relative to optogenetics stimulations, if present).
         

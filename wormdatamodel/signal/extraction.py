@@ -1,20 +1,40 @@
+'''
+Functions related to the extraction of signal from the frames, coded as numpy
+slicing and eventual weighting.
+
+Imports
+-------
+numpy
+'''
+
 import numpy as np
 
 def _generate_box_indices(Centers, box_size=(1,3,3), Box=np.array([]), 
                           shape=[None,None,None]):
     '''
-    Generate indices for slicing of an array to extract boxes/windows of given
-    size centered on Centers.
+    Generate indices for slicing of an array to extract the pixels in 
+    boxes/windows of given size centered on Centers.
     
     Parameters
     ----------
-    Centers: np.array of integers
+    Centers: numpy array of integers
         Centers[center_index, coordinate]. Coordinates are in slicing order, not
         plotting order (i.e. z,y,x for volumetric images).
-    
-    box_size: list of odd integers
+    box_size: list of odd integers (optional)
         Size of the boxes centered on each Center[i]. Again, coordinates are in
-        slicing order.
+        slicing order. This parameter is used if the parameter Box is not passed
+        or its shape[0] is 0. Default: (1,3,3)
+    Box: numpy array (optional)
+        Custom box. Default: np.array([])
+    shape: list of integers
+        Shape of the frames array.
+        
+    Returns
+    -------
+    Indices: numpy array of integers
+        Indices over the frames representing the selected box repeated over the
+        Centers. Use this array to slice the frames array to extract the pixels
+        in the boxes around each center.        
     '''
     
     nCenters = Centers.shape[0]

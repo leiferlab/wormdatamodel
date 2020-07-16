@@ -1,3 +1,13 @@
+'''
+Functions related to saving and loading of signal arrays to and from files.
+The numpy savetxt and loadtxt are used, in addition to a header containing the
+json-serialized information about how the signal was extracted.
+
+Imports
+-------
+numpy, wormdatamodel, pkg_resources, json
+'''
+
 import numpy as np
 import wormdatamodel as wormdm
 import pkg_resources

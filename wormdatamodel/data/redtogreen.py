@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+'''
+Contains functions related to the mapping between the red and the green
+channels of the frames.
+
+Imports
+-------
+numpy, scipy.io, pygmmreg, matplotlib.pyplot
+'''
+
 import numpy as np
 import scipy.io as sio
 import pygmmreg as pyg
@@ -14,6 +24,12 @@ def redToGreen(Cervelli_R, source="LabView", folder=foldername):
     Cervelli_R: numpy array (or irrarray or equivalent)
         Cervelli_R[j,n] gives the coordinate n of point j. The coordinates are
         in zyx (indexing) ordering.
+    source: string
+        Source from where the geometric transformation parameters have been
+        generated (up to now, all the sources produce the same format as 
+        "LabView").
+    folder: string
+        Folder containing the parameters of the geometric transformation.
         
     Returns
     -------
