@@ -12,6 +12,9 @@ python -m pip install . --user
 ```
 adding `--user` at the end if you want to install it in your home folder, or do not have privileges to write files in the standard target folder. Note that there is a C++ extension: the setup.py script will take care of its compilation, but you need to have a C++ compiler installed on your system.
 
+### Dependencies
+The module depends on standard modules like os, pkg_resources, numpy, scipy, matplotlib, json, and less standard modules like pygmmreg (from leiferlab/gmmreg-lw) for the geometric transformations, and mistofrutta (from francescorandi/mistofrutta) for the irregular array irrarray structure and some plotting.
+
 ## Usage
 The module contains two submodules: data and signal. 
 
