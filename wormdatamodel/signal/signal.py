@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import mistofrutta.struct.irrarray as irrarray
 import wormdatamodel as wormdm
-import wormbrain as wormb
 from copy import deepcopy as deepcopy
 import warnings
 import sys
