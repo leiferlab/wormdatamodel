@@ -31,3 +31,4 @@ The submodule signal contains
 
 ## Authors
 Francesco Randi @ Leifer Lab, Princeton Physics
+with contributions from Milena Chakraverti-Wuerthwein
