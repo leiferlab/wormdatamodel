@@ -32,7 +32,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import mistofrutta.struct.irrarray as irrarray
 import wormdatamodel as wormdm
-import wormbrain as wormb
 from copy import deepcopy as deepcopy
 import warnings
 import sys
@@ -548,15 +547,15 @@ See documentation for the irregular array. Default: empty.</dd>
 </details>
 <h3>Class variables</h3>
 <dl>
+<dt id="wormdatamodel.signal.signal.Signal.nan_mask"><code class="name">var <span class="ident">nan_mask</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="wormdatamodel.signal.signal.Signal.data"><code class="name">var <span class="ident">data</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 <dt id="wormdatamodel.signal.signal.Signal.info"><code class="name">var <span class="ident">info</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.signal.signal.Signal.nan_mask"><code class="name">var <span class="ident">nan_mask</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -614,74 +613,6 @@ def from_file(cls,folder,filename,*args,**kwargs):
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="wormdatamodel.signal.signal.Signal.average"><code class="name flex">
-<span>def <span class="ident">average</span></span>(<span>self, strideName, adjust=None)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Average the signal over an irregular stride. The function first
-obtains the trimmed version of the array along that stride, subtracts
-the background, and averages across the events.</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>strideName</code></strong> :&ensp;<code>str</code></dt>
-<dd>Name of the irregular stride.</dd>
-<dt><strong><code>adjust</code></strong> :&ensp;<code>int</code></dt>
-<dd>Number of points to average for the background subtraction.</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><strong><code>avg</code></strong> :&ensp;<code>numpy array</code></dt>
-<dd>Array containing the average over the specified stride.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def average(self,strideName, adjust = None):
-    &#39;&#39;&#39;Average the signal over an irregular stride. The function first
-    obtains the trimmed version of the array along that stride, subtracts
-    the background, and averages across the events.
-    
-    Parameters
-    ----------
-    strideName: str
-        Name of the irregular stride.
-    adjust: int
-        Number of points to average for the background subtraction.
-        
-    Returns
-    -------
-    avg: numpy array
-        Array containing the average over the specified stride.
-    
-    &#39;&#39;&#39;
-    
-    # adjust tells you how many points to average as a baseline to subtract out
-    try:
-        trimmed = self.trim(strideName, adjust = adjust);
-    except:
-        print(&#39;Average unsuccessful, signal has no strides by the name &#34;&#39; + strideName + &#39;&#34;.&#39;)
-        sys.exit();
-    length = trimmed.data.firstIndex[strideName][1];
-    numStrides = trimmed.data.firstIndex[strideName].size-1
-    temp = np.reshape(trimmed.data,(numStrides,length,trimmed.data.shape[1])) 
-    avg = np.mean(temp,axis = 0)
-    return avg</code></pre>
-</details>
-</dd>
-<dt id="wormdatamodel.signal.signal.Signal.copy"><code class="name flex">
-<span>def <span class="ident">copy</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def copy(self):
-    return deepcopy(self)</code></pre>
-</details>
-</dd>
 <dt id="wormdatamodel.signal.signal.Signal.interpolate_nans"><code class="name flex">
 <span>def <span class="ident">interpolate_nans</span></span>(<span>self)</span>
 </code></dt>
@@ -815,6 +746,74 @@ numpy array.</dd>
     return trimmed</code></pre>
 </details>
 </dd>
+<dt id="wormdatamodel.signal.signal.Signal.average"><code class="name flex">
+<span>def <span class="ident">average</span></span>(<span>self, strideName, adjust=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Average the signal over an irregular stride. The function first
+obtains the trimmed version of the array along that stride, subtracts
+the background, and averages across the events.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>strideName</code></strong> :&ensp;<code>str</code></dt>
+<dd>Name of the irregular stride.</dd>
+<dt><strong><code>adjust</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of points to average for the background subtraction.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>avg</code></strong> :&ensp;<code>numpy array</code></dt>
+<dd>Array containing the average over the specified stride.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def average(self,strideName, adjust = None):
+    &#39;&#39;&#39;Average the signal over an irregular stride. The function first
+    obtains the trimmed version of the array along that stride, subtracts
+    the background, and averages across the events.
+    
+    Parameters
+    ----------
+    strideName: str
+        Name of the irregular stride.
+    adjust: int
+        Number of points to average for the background subtraction.
+        
+    Returns
+    -------
+    avg: numpy array
+        Array containing the average over the specified stride.
+    
+    &#39;&#39;&#39;
+    
+    # adjust tells you how many points to average as a baseline to subtract out
+    try:
+        trimmed = self.trim(strideName, adjust = adjust);
+    except:
+        print(&#39;Average unsuccessful, signal has no strides by the name &#34;&#39; + strideName + &#39;&#34;.&#39;)
+        sys.exit();
+    length = trimmed.data.firstIndex[strideName][1];
+    numStrides = trimmed.data.firstIndex[strideName].size-1
+    temp = np.reshape(trimmed.data,(numStrides,length,trimmed.data.shape[1])) 
+    avg = np.mean(temp,axis = 0)
+    return avg</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.signal.signal.Signal.copy"><code class="name flex">
+<span>def <span class="ident">copy</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def copy(self):
+    return deepcopy(self)</code></pre>
+</details>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -836,15 +835,15 @@ numpy array.</dd>
 <li>
 <h4><code><a title="wormdatamodel.signal.signal.Signal" href="#wormdatamodel.signal.signal.Signal">Signal</a></code></h4>
 <ul class="two-column">
-<li><code><a title="wormdatamodel.signal.signal.Signal.average" href="#wormdatamodel.signal.signal.Signal.average">average</a></code></li>
-<li><code><a title="wormdatamodel.signal.signal.Signal.copy" href="#wormdatamodel.signal.signal.Signal.copy">copy</a></code></li>
-<li><code><a title="wormdatamodel.signal.signal.Signal.data" href="#wormdatamodel.signal.signal.Signal.data">data</a></code></li>
 <li><code><a title="wormdatamodel.signal.signal.Signal.from_file" href="#wormdatamodel.signal.signal.Signal.from_file">from_file</a></code></li>
-<li><code><a title="wormdatamodel.signal.signal.Signal.info" href="#wormdatamodel.signal.signal.Signal.info">info</a></code></li>
 <li><code><a title="wormdatamodel.signal.signal.Signal.interpolate_nans" href="#wormdatamodel.signal.signal.Signal.interpolate_nans">interpolate_nans</a></code></li>
-<li><code><a title="wormdatamodel.signal.signal.Signal.nan_mask" href="#wormdatamodel.signal.signal.Signal.nan_mask">nan_mask</a></code></li>
 <li><code><a title="wormdatamodel.signal.signal.Signal.smooth" href="#wormdatamodel.signal.signal.Signal.smooth">smooth</a></code></li>
 <li><code><a title="wormdatamodel.signal.signal.Signal.trim" href="#wormdatamodel.signal.signal.Signal.trim">trim</a></code></li>
+<li><code><a title="wormdatamodel.signal.signal.Signal.average" href="#wormdatamodel.signal.signal.Signal.average">average</a></code></li>
+<li><code><a title="wormdatamodel.signal.signal.Signal.copy" href="#wormdatamodel.signal.signal.Signal.copy">copy</a></code></li>
+<li><code><a title="wormdatamodel.signal.signal.Signal.nan_mask" href="#wormdatamodel.signal.signal.Signal.nan_mask">nan_mask</a></code></li>
+<li><code><a title="wormdatamodel.signal.signal.Signal.data" href="#wormdatamodel.signal.signal.Signal.data">data</a></code></li>
+<li><code><a title="wormdatamodel.signal.signal.Signal.info" href="#wormdatamodel.signal.signal.Signal.info">info</a></code></li>
 <li><code><a title="wormdatamodel.signal.signal.Signal.whichSkip" href="#wormdatamodel.signal.signal.Signal.whichSkip">whichSkip</a></code></li>
 </ul>
 </li>

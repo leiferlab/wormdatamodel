@@ -155,6 +155,70 @@ def from_file_info(folder, filename):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="wormdatamodel.signal.file.to_file"><code class="name flex">
+<span>def <span class="ident">to_file</span></span>(<span>Signal, folder, filename, method, other={})</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Save signal array to a text file. The array is saved with np.savetxt,
+so it can be loaded directly with np.loadtxt. However, this function adds
+a commented header that contains a json serialized dictionary with
+properties of the signal, like the method used to extract it and the version
+of this module. To retrieve and parse this header, use from_file().</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>Signal</code></strong> :&ensp;<code>numpy array</code></dt>
+<dd>2D array containing the signal.</dd>
+<dt><strong><code>folder</code></strong> :&ensp;<code>string</code></dt>
+<dd>Folder in which to save the file.</dd>
+<dt><strong><code>filename</code></strong> :&ensp;<code>string</code></dt>
+<dd>Name of the destination file.</dd>
+<dt><strong><code>method</code></strong> :&ensp;<code>string</code></dt>
+<dd>Method used to extract the signal from the images.</dd>
+<dt><strong><code>other</code></strong> :&ensp;<code>dict (optional)</code></dt>
+<dd>Other details about the signal extraction that need to be saved.
+Default: {}.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_file(Signal, folder, filename, method, other={}):
+    &#39;&#39;&#39;Save signal array to a text file. The array is saved with np.savetxt,
+    so it can be loaded directly with np.loadtxt. However, this function adds
+    a commented header that contains a json serialized dictionary with 
+    properties of the signal, like the method used to extract it and the version
+    of this module. To retrieve and parse this header, use from_file().
+    
+    Parameters
+    ----------
+    Signal: numpy array
+        2D array containing the signal.
+    folder: string
+        Folder in which to save the file. 
+    filename: string
+        Name of the destination file.
+    method: string
+        Method used to extract the signal from the images.
+    other: dict (optional)
+        Other details about the signal extraction that need to be saved.
+        Default: {}.
+    &#39;&#39;&#39;
+    if folder[-1]!=&#34;/&#34;: folder+=&#34;/&#34;
+    
+    #v = pkg_resources.get_distribution(&#34;wormbrain&#34;).version
+    v = pkg_resources.get_distribution(&#34;wormdatamodel&#34;).version
+    
+    header = {&#34;method&#34;: method, &#34;version&#34;: v}
+    for key in other:
+        try:
+            header[key] = other[key]
+        except:
+            pass
+    header = json.dumps(header)
+    
+    np.savetxt(folder+filename, Signal, header=header)</code></pre>
+</details>
+</dd>
 <dt id="wormdatamodel.signal.file.from_file"><code class="name flex">
 <span>def <span class="ident">from_file</span></span>(<span>folder, filename)</span>
 </code></dt>
@@ -269,70 +333,6 @@ how the signal was extracted from the frames, without loading the array
     return info</code></pre>
 </details>
 </dd>
-<dt id="wormdatamodel.signal.file.to_file"><code class="name flex">
-<span>def <span class="ident">to_file</span></span>(<span>Signal, folder, filename, method, other={})</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Save signal array to a text file. The array is saved with np.savetxt,
-so it can be loaded directly with np.loadtxt. However, this function adds
-a commented header that contains a json serialized dictionary with
-properties of the signal, like the method used to extract it and the version
-of this module. To retrieve and parse this header, use from_file().</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>Signal</code></strong> :&ensp;<code>numpy array</code></dt>
-<dd>2D array containing the signal.</dd>
-<dt><strong><code>folder</code></strong> :&ensp;<code>string</code></dt>
-<dd>Folder in which to save the file.</dd>
-<dt><strong><code>filename</code></strong> :&ensp;<code>string</code></dt>
-<dd>Name of the destination file.</dd>
-<dt><strong><code>method</code></strong> :&ensp;<code>string</code></dt>
-<dd>Method used to extract the signal from the images.</dd>
-<dt><strong><code>other</code></strong> :&ensp;<code>dict (optional)</code></dt>
-<dd>Other details about the signal extraction that need to be saved.
-Default: {}.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def to_file(Signal, folder, filename, method, other={}):
-    &#39;&#39;&#39;Save signal array to a text file. The array is saved with np.savetxt,
-    so it can be loaded directly with np.loadtxt. However, this function adds
-    a commented header that contains a json serialized dictionary with 
-    properties of the signal, like the method used to extract it and the version
-    of this module. To retrieve and parse this header, use from_file().
-    
-    Parameters
-    ----------
-    Signal: numpy array
-        2D array containing the signal.
-    folder: string
-        Folder in which to save the file. 
-    filename: string
-        Name of the destination file.
-    method: string
-        Method used to extract the signal from the images.
-    other: dict (optional)
-        Other details about the signal extraction that need to be saved.
-        Default: {}.
-    &#39;&#39;&#39;
-    if folder[-1]!=&#34;/&#34;: folder+=&#34;/&#34;
-    
-    #v = pkg_resources.get_distribution(&#34;wormbrain&#34;).version
-    v = pkg_resources.get_distribution(&#34;wormdatamodel&#34;).version
-    
-    header = {&#34;method&#34;: method, &#34;version&#34;: v}
-    for key in other:
-        try:
-            header[key] = other[key]
-        except:
-            pass
-    header = json.dumps(header)
-    
-    np.savetxt(folder+filename, Signal, header=header)</code></pre>
-</details>
-</dd>
 </dl>
 </section>
 <section>
@@ -353,9 +353,9 @@ Default: {}.</dd>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
+<li><code><a title="wormdatamodel.signal.file.to_file" href="#wormdatamodel.signal.file.to_file">to_file</a></code></li>
 <li><code><a title="wormdatamodel.signal.file.from_file" href="#wormdatamodel.signal.file.from_file">from_file</a></code></li>
 <li><code><a title="wormdatamodel.signal.file.from_file_info" href="#wormdatamodel.signal.file.from_file_info">from_file_info</a></code></li>
-<li><code><a title="wormdatamodel.signal.file.to_file" href="#wormdatamodel.signal.file.to_file">to_file</a></code></li>
 </ul>
 </li>
 </ul>

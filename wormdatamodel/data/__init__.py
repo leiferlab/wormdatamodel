@@ -1,4 +1,4 @@
-__all__ = ['recording','volume','redtogreen'] # I'm not really sure this is correct
+__all__ = ['recording','volume','load_frames_legacy','redToGreen','genRedToGreen']
 
 from .recording import recording
 from ._legacy_c import load_frames_legacy

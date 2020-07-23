@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.8.3" />
 <title>wormdatamodel API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Package implementing a data model for the whole brain recordings (more
+broadly, of any multichannel volumetric recording - sequence of …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/github.min.css" crossorigin>
@@ -22,11 +23,108 @@
 <h1 class="title">Package <code>wormdatamodel</code></h1>
 </header>
 <section id="section-intro">
+<p>Package implementing a data model for the whole brain recordings (more
+broadly, of any multichannel volumetric recording - sequence of "hyperstacks").
+While there are only a few options to efficiently store an uncompressed sequence
+of images, so that the issues with uncompatibility of that data with different
+softwares are limited, metadata associated with it (z position of the image,
+index of the volume to which it belongs, &hellip;) can be stored in different ways.</p>
+<p>Data from any source can be fed in the rest of the libraries and modules,
+provided that an interface exposing the same methods and variables as the
+wormbrain.data.recording class.</p>
+<p>The module depends on standard modules like os, pkg_resources, numpy, scipy,
+matplotlib, json, and less standard modules like pygmmreg
+(from leiferlab/gmmreg-lw) for the geometric transformations, and mistofrutta
+(from francescorandi/mistofrutta) for the irregular array irrarray structure
+and some plotting.</p>
+<p>The module contains two submodules: data and signal. </p>
+<h2 id="data">Data</h2>
+<p>The submbodule data contains</p>
+<ul>
+<li>
+<p>the class recording that is the actual data model representing the data, and
+that has methods to load the data (images/frames) and metadata (info about the
+frames, like z position for volumetric recordings, index of the volume to which
+they belong, events like optogenetic stimulations, &hellip;) from file. See the
+documentation for the recording class for the useful attributes and methods.</p>
+</li>
+<li>
+<p>the functions that provide the geometric mapping between the pixels in the
+different channels. </p>
+</li>
+</ul>
+<h2 id="signal">Signal</h2>
+<p>The submodule signal contains</p>
+<ul>
+<li>
+<p>methods to extract the signal from the frames given the positions of the
+neurons (basically using advanced numpy slicing with various kind of "boxes" or
+"windows" centered on the neurons),</p>
+</li>
+<li>
+<p>methods to save/load the extracted signals to/from file, including metadata on
+how the signal has been extracted,</p>
+</li>
+<li>
+<p>the class Signal that contains the signal, preprocessing methods like nan
+interpolation, photobleaching correction (to do), and, based on the irrarray
+structure, methods that allow one to deal with irregularly spaced events (like
+optogenetic stimulations) with a clear syntax.</p>
+</li>
+</ul>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">__all__ = [&#39;data&#39;,&#39;signal&#39;]
+<pre><code class="python">&#39;&#39;&#39;Package implementing a data model for the whole brain recordings (more 
+broadly, of any multichannel volumetric recording - sequence of &#34;hyperstacks&#34;). 
+While there are only a few options to efficiently store an uncompressed sequence
+of images, so that the issues with uncompatibility of that data with different 
+softwares are limited, metadata associated with it (z position of the image, 
+index of the volume to which it belongs, ...) can be stored in different ways.
+
+Data from any source can be fed in the rest of the libraries and modules, 
+provided that an interface exposing the same methods and variables as the 
+wormbrain.data.recording class.
+
+The module depends on standard modules like os, pkg_resources, numpy, scipy, 
+matplotlib, json, and less standard modules like pygmmreg 
+(from leiferlab/gmmreg-lw) for the geometric transformations, and mistofrutta 
+(from francescorandi/mistofrutta) for the irregular array irrarray structure 
+and some plotting.
+
+The module contains two submodules: data and signal. 
+
+Data
+----
+The submbodule data contains
+
+- the class recording that is the actual data model representing the data, and 
+  that has methods to load the data (images/frames) and metadata (info about the 
+  frames, like z position for volumetric recordings, index of the volume to which 
+  they belong, events like optogenetic stimulations, ...) from file. See the 
+  documentation for the recording class for the useful attributes and methods.
+   
+- the functions that provide the geometric mapping between the pixels in the 
+  different channels. 
+
+Signal
+------
+The submodule signal contains
+
+- methods to extract the signal from the frames given the positions of the 
+  neurons (basically using advanced numpy slicing with various kind of &#34;boxes&#34; or 
+  &#34;windows&#34; centered on the neurons),
+  
+- methods to save/load the extracted signals to/from file, including metadata on
+  how the signal has been extracted,
+  
+- the class Signal that contains the signal, preprocessing methods like nan 
+  interpolation, photobleaching correction (to do), and, based on the irrarray 
+  structure, methods that allow one to deal with irregularly spaced events (like 
+  optogenetic stimulations) with a clear syntax.&#39;&#39;&#39;
+
+__all__ = [&#39;data&#39;,&#39;signal&#39;]
 
 from . import data
 from . import signal</code></pre>
@@ -55,7 +153,10 @@ from . import signal</code></pre>
 <nav id="sidebar">
 <h1>Index</h1>
 <div class="toc">
-<ul></ul>
+<ul>
+<li><a href="#data">Data</a></li>
+<li><a href="#signal">Signal</a></li>
+</ul>
 </div>
 <ul id="index">
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>

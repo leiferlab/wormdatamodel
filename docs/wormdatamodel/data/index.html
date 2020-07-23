@@ -26,7 +26,7 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">__all__ = [&#39;recording&#39;,&#39;volume&#39;,&#39;redtogreen&#39;] # I&#39;m not really sure this is correct
+<pre><code class="python">__all__ = [&#39;recording&#39;,&#39;volume&#39;,&#39;load_frames_legacy&#39;,&#39;redToGreen&#39;,&#39;genRedToGreen&#39;]
 
 from .recording import recording
 from ._legacy_c import load_frames_legacy
@@ -40,13 +40,197 @@ from .redtogreen import redToGreen, genRedToGreen</code></pre>
 <dt><code class="name"><a title="wormdatamodel.data.redtogreen" href="redtogreen.html">wormdatamodel.data.redtogreen</a></code></dt>
 <dd>
 <div class="desc"><p>Contains functions related to the mapping between the red and the green
-channels of the frames …</p></div>
+channels of the frames. Its functions are made available in the
+…</p></div>
 </dd>
 </dl>
 </section>
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="wormdatamodel.data.load_frames_legacy"><code class="name flex">
+<span>def <span class="ident">load_frames_legacy</span></span>(<span>...)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Reads frames from a file containing double-channel images, in which the
+lines of each channel in each frame are not stored contiguously,
+e.g. line0R, line0G, line1R, line1G, &hellip;</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>fname</code></strong> :&ensp;<code>string</code></dt>
+<dd>Filename.</dd>
+<dt><strong><code>startFrame</code></strong> :&ensp;<code>int</code></dt>
+<dd>Index of the first frame to read, in the file reference frame.</dd>
+<dt><strong><code>frameN</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of frames to read.</dd>
+<dt><strong><code>rowSize</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of pixels in each line (of one channel).</dd>
+<dt><strong><code>rowN</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of rows in each channel.</dd>
+<dt><strong><code>frames_o</code></strong> :&ensp;<code>numpy array</code></dt>
+<dd>Array in which to store the read frames.</dd>
+</dl></div>
+</dd>
+<dt id="wormdatamodel.data.redToGreen"><code class="name flex">
+<span>def <span class="ident">redToGreen</span></span>(<span>Cervelli_R, source='LabView', folder='/tigress/LEIFER/francesco/pumpprobe/immobilizationtest/REDGREEN_objectivesregistration_20190717_094840/')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Transforms coordinates from the red to the green part of the image. The
+transformation is purely 2D, the z coordinates are untouched.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>Cervelli_R</code></strong> :&ensp;<code>numpy array (or irrarray</code> or <code>equivalent)</code></dt>
+<dd>Cervelli_R[j,n] gives the coordinate n of point j. The coordinates are
+in zyx (indexing) ordering.</dd>
+<dt><strong><code>source</code></strong> :&ensp;<code>string</code></dt>
+<dd>Source from where the geometric transformation parameters have been
+generated (up to now, all the sources produce the same format as
+"LabView").</dd>
+<dt><strong><code>folder</code></strong> :&ensp;<code>string</code></dt>
+<dd>Folder containing the parameters of the geometric transformation.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>Cervelli_G</code></strong> :&ensp;<code>numpy array (or irrarray</code> or <code>equivalent)</code></dt>
+<dd>Analogous to Cervelli_R, with y and x coordinates transformed.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def redToGreen(Cervelli_R, source=&#34;LabView&#34;, folder=foldername):
+    &#39;&#39;&#39;Transforms coordinates from the red to the green part of the image. The
+    transformation is purely 2D, the z coordinates are untouched.
+    
+    Parameters
+    ----------
+    Cervelli_R: numpy array (or irrarray or equivalent)
+        Cervelli_R[j,n] gives the coordinate n of point j. The coordinates are
+        in zyx (indexing) ordering.
+    source: string
+        Source from where the geometric transformation parameters have been
+        generated (up to now, all the sources produce the same format as 
+        &#34;LabView&#34;).
+    folder: string
+        Folder containing the parameters of the geometric transformation.
+        
+    Returns
+    -------
+    Cervelli_G: numpy array (or irrarray or equivalent)
+        Analogous to Cervelli_R, with y and x coordinates transformed.
+    &#39;&#39;&#39;
+
+    ## Load tps transformation pre-computed from LabView
+    Ctrl, Param, normParam, denormParam = pyg.loadParam(
+            folder, source=source, filenamebase=&#34;redGreenRegistration&#34;)
+
+    ## Get an array [[x,y,-1],...] to do the 2D transformation
+    # The -1 comes from the fact that the transformation was fitted in LabView
+    # with points meant to go in the display vi, which has all:-1 for z.
+
+    # Deep copy and create new neurons class for the transformation
+    #Cervelli_G = sb.neurons(np.copy(Cervelli.coord),volFrame0)
+    Cervelli_G = Cervelli_R.copy()
+
+    # Flip zyx to xyz, and set all the z to -1 for the 2D transformation
+    # Copy just coord to avoid passing weird stuff to the C code
+    Points = np.copy(Cervelli_G[:,::-1].astype(np.float)) 
+    Points[:,0:2] = Points[:,0:2]
+    Points[:,2] = -1.0
+
+    ## Do the 2D transformation
+    PointsB = pyg.transformation(Points, Ctrl, Param, normParam, denormParam)
+    
+    # Copy the x y coordinates back into the neurons object Cervelli_G.
+    # These will be directly the indices you use to extract the signal from the
+    # frames.
+    Cervelli_G[:,1:] = np.rint(PointsB[:,0:2][:,::-1]).astype(np.int)
+    
+    return Cervelli_G</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.genRedToGreen"><code class="name flex">
+<span>def <span class="ident">genRedToGreen</span></span>(<span>folder, plot=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the files containing the parameters and the control points
+defining the transformation from red to green, starting from the
+alignments.mat file from the old pipeline.</p>
+<p>Note: In the .mat file, the first array loaded has to be the Scene, the
+second the Model. XY are inverted.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>folder</code></strong> :&ensp;<code>string</code></dt>
+<dd>Folder containing the alignments.mat file.</dd>
+</dl>
+<p>Saves to file the results. Use directly redToGreen, passing the same folder.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def genRedToGreen(folder, plot=False):
+    &#39;&#39;&#39;Generates the files containing the parameters and the control points
+    defining the transformation from red to green, starting from the 
+    alignments.mat file from the old pipeline.
+    
+    Note: In the .mat file, the first array loaded has to be the Scene, the 
+    second the Model. XY are inverted.
+    
+    Parameters
+    ----------
+    folder: string
+        Folder containing the alignments.mat file.
+        
+    Saves to file the results. Use directly redToGreen, passing the same folder.
+    &#39;&#39;&#39;
+    
+    if folder[-1]!=&#34;/&#34;:folder+=&#34;/&#34;
+    cont=sio.loadmat(folder+&#34;alignments.mat&#34;)
+    
+    &#39;&#39;&#39;
+    A = cont[&#39;alignments&#39;][0][0][1][0][0][2]
+    B = cont[&#39;alignments&#39;][0][0][1][0][0][3]
+    &#39;&#39;&#39;
+    B = cont[&#39;alignments&#39;][0][0][1][0][0][2]
+    A = cont[&#39;alignments&#39;][0][0][1][0][0][3]
+    
+    Scale = np.array([0.8,0.5,0.3])
+    nscale = len(Scale)
+    L = np.zeros_like(Scale)
+
+    Model = np.ones((A.shape[0],A.shape[1]+1))*(-1.0)
+    Scene = np.ones((B.shape[0],B.shape[1]+1))*(-1.0)
+    Model[:,0:2] = A[:,::-1]
+    Model[:,2] = -1.0
+    Scene[:,0:2] = B[:,::-1]
+    Scene[:,2] = -1.0
+    Ctrl = np.copy(Model)
+
+    M = Model.shape[0]
+    D = Model.shape[1]
+    S = Scene.shape[0]
+    N = Ctrl.shape[0]
+
+    Param = np.zeros((N,D),dtype=np.float64)
+    Param[1,0] = 1.
+    Param[2,1] = 1.
+
+    normParams = np.zeros(4)
+    denormParams = np.zeros(4)
+
+    Out = np.zeros((M,D))
+    pyg.register(D,Param,L,nscale,Scale,N,Ctrl,M,Model,S,Scene,M,Out,normParams,denormParams)
+    pyg.saveParam(folder,Ctrl,Param,normParams,denormParams)
+    
+    if plot:
+        plt.plot(Out.T[0],Out.T[1],&#39;o&#39;)
+        plt.plot(Scene.T[0],Scene.T[1],&#39;o&#39;)
+        plt.show()</code></pre>
+</details>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
@@ -1012,7 +1196,39 @@ are mounted vertically or horizontally.</dd>
 </details>
 <h3>Class variables</h3>
 <dl>
+<dt id="wormdatamodel.data.recording.frame"><code class="name">var <span class="ident">frame</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameN"><code class="name">var <span class="ident">frameN</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameTime"><code class="name">var <span class="ident">frameTime</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameCount"><code class="name">var <span class="ident">frameCount</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="wormdatamodel.data.recording.Z"><code class="name">var <span class="ident">Z</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.nVolume"><code class="name">var <span class="ident">nVolume</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.volumeIndex"><code class="name">var <span class="ident">volumeIndex</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.volumeFirstFrame"><code class="name">var <span class="ident">volumeFirstFrame</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.volumeDirection"><code class="name">var <span class="ident">volumeDirection</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1020,11 +1236,23 @@ are mounted vertically or horizontally.</dd>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="wormdatamodel.data.recording.channelN"><code class="name">var <span class="ident">channelN</span></code></dt>
+<dt id="wormdatamodel.data.recording.dt"><code class="name">var <span class="ident">dt</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="wormdatamodel.data.recording.channelSize"><code class="name">var <span class="ident">channelSize</span></code></dt>
+<dt id="wormdatamodel.data.recording.piezoFrequency"><code class="name">var <span class="ident">piezoFrequency</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.latencyShift"><code class="name">var <span class="ident">latencyShift</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.rectype"><code class="name">var <span class="ident">rectype</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.legacy"><code class="name">var <span class="ident">legacy</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1036,11 +1264,74 @@ are mounted vertically or horizontally.</dd>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="wormdatamodel.data.recording.dt"><code class="name">var <span class="ident">dt</span></code></dt>
+<dt id="wormdatamodel.data.recording.channelN"><code class="name">var <span class="ident">channelN</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameBitDepth"><code class="name">var <span class="ident">frameBitDepth</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.channelSize"><code class="name">var <span class="ident">channelSize</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameSize"><code class="name">var <span class="ident">frameSize</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameDType"><code class="name">var <span class="ident">frameDType</span></code></dt>
+<dd>
+<div class="desc"><p>Unsigned integer type, compatible with C <code>unsigned short</code>.
+Character code: <code>'H'</code>.
+Canonical name: <code>np.ushort</code>.
+Alias <em>on this platform</em>: <code>np.uint16</code>: 16-bit unsigned integer (0 to 65535).</p></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameSizeBytes"><code class="name">var <span class="ident">frameSizeBytes</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameBinning"><code class="name">var <span class="ident">frameBinning</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameCountOffset"><code class="name">var <span class="ident">frameCountOffset</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.framePixelOffset"><code class="name">var <span class="ident">framePixelOffset</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameUmPerPixel"><code class="name">var <span class="ident">frameUmPerPixel</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.framePixelPerUm"><code class="name">var <span class="ident">framePixelPerUm</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.memorySaturated"><code class="name">var <span class="ident">memorySaturated</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameBufferLock"><code class="name">var <span class="ident">frameBufferLock</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameLastLoaded"><code class="name">var <span class="ident">frameLastLoaded</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.frameBufferPosition"><code class="name">var <span class="ident">frameBufferPosition</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 <dt id="wormdatamodel.data.recording.filePosition"><code class="name">var <span class="ident">filePosition</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.foldername"><code class="name">var <span class="ident">foldername</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1056,10 +1347,6 @@ are mounted vertically or horizontally.</dd>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="wormdatamodel.data.recording.filenameOptogeneticsTwoPhoton"><code class="name">var <span class="ident">filenameOptogeneticsTwoPhoton</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
 <dt id="wormdatamodel.data.recording.filenameOtherFrameSynchronous"><code class="name">var <span class="ident">filenameOtherFrameSynchronous</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -1068,94 +1355,7 @@ are mounted vertically or horizontally.</dd>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="wormdatamodel.data.recording.foldername"><code class="name">var <span class="ident">foldername</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frame"><code class="name">var <span class="ident">frame</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameBinning"><code class="name">var <span class="ident">frameBinning</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameBitDepth"><code class="name">var <span class="ident">frameBitDepth</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameBufferLock"><code class="name">var <span class="ident">frameBufferLock</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameBufferPosition"><code class="name">var <span class="ident">frameBufferPosition</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameCount"><code class="name">var <span class="ident">frameCount</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameCountOffset"><code class="name">var <span class="ident">frameCountOffset</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameDType"><code class="name">var <span class="ident">frameDType</span></code></dt>
-<dd>
-<div class="desc"><p>Unsigned integer type, compatible with C <code>unsigned short</code>.
-Character code: <code>'H'</code>.
-Canonical name: <code>np.ushort</code>.
-Alias <em>on this platform</em>: <code>np.uint16</code>: 16-bit unsigned integer (0 to 65535).</p></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameLastLoaded"><code class="name">var <span class="ident">frameLastLoaded</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameN"><code class="name">var <span class="ident">frameN</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.framePixelOffset"><code class="name">var <span class="ident">framePixelOffset</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.framePixelPerUm"><code class="name">var <span class="ident">framePixelPerUm</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameSize"><code class="name">var <span class="ident">frameSize</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameSizeBytes"><code class="name">var <span class="ident">frameSizeBytes</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameTime"><code class="name">var <span class="ident">frameTime</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.frameUmPerPixel"><code class="name">var <span class="ident">frameUmPerPixel</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.latencyShift"><code class="name">var <span class="ident">latencyShift</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.legacy"><code class="name">var <span class="ident">legacy</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.memorySaturated"><code class="name">var <span class="ident">memorySaturated</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.nVolume"><code class="name">var <span class="ident">nVolume</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.optogeneticsFrameCount"><code class="name">var <span class="ident">optogeneticsFrameCount</span></code></dt>
+<dt id="wormdatamodel.data.recording.filenameOptogeneticsTwoPhoton"><code class="name">var <span class="ident">filenameOptogeneticsTwoPhoton</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1163,11 +1363,11 @@ Alias <em>on this platform</em>: <code>np.uint16</code>: 16-bit unsigned integer
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="wormdatamodel.data.recording.optogeneticsNPulses"><code class="name">var <span class="ident">optogeneticsNPulses</span></code></dt>
+<dt id="wormdatamodel.data.recording.optogeneticsFrameCount"><code class="name">var <span class="ident">optogeneticsFrameCount</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="wormdatamodel.data.recording.optogeneticsNTrains"><code class="name">var <span class="ident">optogeneticsNTrains</span></code></dt>
+<dt id="wormdatamodel.data.recording.optogeneticsNPulses"><code class="name">var <span class="ident">optogeneticsNPulses</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1175,11 +1375,15 @@ Alias <em>on this platform</em>: <code>np.uint16</code>: 16-bit unsigned integer
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="wormdatamodel.data.recording.optogeneticsTargetX"><code class="name">var <span class="ident">optogeneticsTargetX</span></code></dt>
+<dt id="wormdatamodel.data.recording.optogeneticsNTrains"><code class="name">var <span class="ident">optogeneticsNTrains</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="wormdatamodel.data.recording.optogeneticsTargetXYSpace"><code class="name">var <span class="ident">optogeneticsTargetXYSpace</span></code></dt>
+<dt id="wormdatamodel.data.recording.optogeneticsTimeBtwTrains"><code class="name">var <span class="ident">optogeneticsTimeBtwTrains</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="wormdatamodel.data.recording.optogeneticsTargetX"><code class="name">var <span class="ident">optogeneticsTargetX</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1191,7 +1395,7 @@ Alias <em>on this platform</em>: <code>np.uint16</code>: 16-bit unsigned integer
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="wormdatamodel.data.recording.optogeneticsTargetZDevice"><code class="name">var <span class="ident">optogeneticsTargetZDevice</span></code></dt>
+<dt id="wormdatamodel.data.recording.optogeneticsTargetXYSpace"><code class="name">var <span class="ident">optogeneticsTargetXYSpace</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1199,37 +1403,33 @@ Alias <em>on this platform</em>: <code>np.uint16</code>: 16-bit unsigned integer
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="wormdatamodel.data.recording.optogeneticsTargetZDevice"><code class="name">var <span class="ident">optogeneticsTargetZDevice</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="wormdatamodel.data.recording.optogeneticsTime"><code class="name">var <span class="ident">optogeneticsTime</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.optogeneticsTimeBtwTrains"><code class="name">var <span class="ident">optogeneticsTimeBtwTrains</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.piezoFrequency"><code class="name">var <span class="ident">piezoFrequency</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.rectype"><code class="name">var <span class="ident">rectype</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.volumeDirection"><code class="name">var <span class="ident">volumeDirection</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.volumeFirstFrame"><code class="name">var <span class="ident">volumeFirstFrame</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="wormdatamodel.data.recording.volumeIndex"><code class="name">var <span class="ident">volumeIndex</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Methods</h3>
 <dl>
+<dt id="wormdatamodel.data.recording.load"><code class="name flex">
+<span>def <span class="ident">load</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load(self, *args, **kwargs):
+    if self.rectype==&#34;3d&#34;:
+        self._load_3d(*args, **kwargs)
+    elif self.rectype==&#34;2d&#34;:
+        self._load_2d(*args, **kwargs)</code></pre>
+</details>
+</dd>
 <dt id="wormdatamodel.data.recording.free_memory"><code class="name flex">
 <span>def <span class="ident">free_memory</span></span>(<span>self)</span>
 </code></dt>
@@ -1242,6 +1442,252 @@ Alias <em>on this platform</em>: <code>np.uint16</code>: 16-bit unsigned integer
 <pre><code class="python">def free_memory(self):
     del self.frame
     self.frame = np.array([])</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_frames"><code class="name flex">
+<span>def <span class="ident">load_frames</span></span>(<span>self, startFrame=0, frameN=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loads the specified frames into the class buffer, from a file in which
+each frame in each channel is contiguously stored (line0R, line1R, &hellip;,
+line0G, line1G, &hellip;)</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>startFrame</code></strong> :&ensp;<code>int (optional)</code></dt>
+<dd>First frame to load, in the file reference frame (not absolute frame
+count). Default: 0.</dd>
+<dt><strong><code>frameN</code></strong> :&ensp;<code>int (optional)</code></dt>
+<dd>Number of frames to load.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_frames(self, startFrame=0, frameN=0):
+    &#39;&#39;&#39;Loads the specified frames into the class buffer, from a file in which
+    each frame in each channel is contiguously stored (line0R, line1R, ...,
+    line0G, line1G, ...)
+    
+    Parameters
+    ----------
+    startFrame: int (optional)
+        First frame to load, in the file reference frame (not absolute frame
+        count). Default: 0.
+    frameN: int (optional)
+        Number of frames to load.
+    &#39;&#39;&#39;
+    
+    # Open file
+    self.file = open(self.foldername+self.filenameFrames, &#39;br&#39;)
+    # Go to desired start frame
+    self.file.seek(self.frameSizeBytes*startFrame)
+    
+    self.frame = np.fromfile(self.file, dtype=self.frameDType, 
+                    count=frameN*self.frameSize).reshape(
+                    frameN,self.channelN,
+                    self.channelSizeY,self.channelSizeX)
+                    
+    self.filePosition = self.file.tell()
+    # Close file
+    self.file.close()
+    self.frameLastLoaded = startFrame+frameN
+    
+    self.frameBufferIndexes = np.arange(startFrame,
+                                    startFrame+frameN).astype(np.uint32)</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_frames_legacy"><code class="name flex">
+<span>def <span class="ident">load_frames_legacy</span></span>(<span>self, startFrame=0, frameN=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loads the specified frames into the buffer from a file in which the
+image is stored line0R,line0G,line1R,line1G,&hellip;</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>startFrame</code></strong> :&ensp;<code>int (optional)</code></dt>
+<dd>First frame to load, in the file reference frame (not absolute frame
+count). Default: 0.</dd>
+<dt><strong><code>frameN</code></strong> :&ensp;<code>int (optional)</code></dt>
+<dd>Number of frames to load.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_frames_legacy(self, startFrame=0, frameN=0):
+    &#39;&#39;&#39;Loads the specified frames into the buffer from a file in which the
+    image is stored line0R,line0G,line1R,line1G,...
+    
+    Parameters
+    ----------
+    startFrame: int (optional)
+        First frame to load, in the file reference frame (not absolute frame
+        count). Default: 0.
+    frameN: int (optional)
+        Number of frames to load.
+    &#39;&#39;&#39;
+    
+    # Pre-allocate the memory for the frames          
+    self.frame = np.empty((frameN,self.channelN,
+                           self.channelSizeY,self.channelSizeX),
+                           dtype=np.uint16)
+    # Load                       
+    wormdm.data.load_frames_legacy(self.foldername+self.filenameFrames, 
+                               (np.int32)(startFrame), (np.int32)(frameN), 
+                               (np.int32)(self.channelSizeX), 
+                               (np.int32)(self.channelSizeY),
+                               self.frame)
+    
+    self.frameLastLoaded = startFrame+frameN
+    
+    self.frameBufferIndexes = np.arange(startFrame,
+                                    startFrame+frameN).astype(np.uint32)</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_extra"><code class="name flex">
+<span>def <span class="ident">load_extra</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Load metadata for the recording, implicitly choosing the type of
+metadata depending on the recording type (2D or 3D). Loads directly in
+the class variables, does not return anything.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_extra(self):
+    &#39;&#39;&#39;Load metadata for the recording, implicitly choosing the type of
+    metadata depending on the recording type (2D or 3D). Loads directly in
+    the class variables, does not return anything.
+    &#39;&#39;&#39;
+    if self.rectype==&#34;3d&#34;:
+        self._load_extra_3d()
+    elif self.rectype==&#34;2d&#34;:
+        self._load_extra_2d()</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.load_optogenetics"><code class="name flex">
+<span>def <span class="ident">load_optogenetics</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Load optogenetics metadata. Automatically detects a couple of
+saving configurations, that have changed in time.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def load_optogenetics(self):
+    &#39;&#39;&#39;Load optogenetics metadata. Automatically detects a couple of 
+    saving configurations, that have changed in time.
+    &#39;&#39;&#39;
+    if os.path.isfile(self.foldername+self.filenameOptogeneticsTwoPhoton):
+        self.optogeneticsType = &#34;twoPhoton&#34;
+        optogeneticsF = open(self.foldername+self.filenameOptogeneticsTwoPhoton)
+        Line = optogeneticsF.readlines()
+        optogeneticsF.close()
+        if Line[0] == &#34;frameCount\tnPulses\trepRateDivider\toptogTargetX\toptogTargetY\toptogTargetZ\toptogTargetXYSpace\toptogTargetZSpace\toptogTargetZDevice\tTime\n&#34;:
+            Line.pop(0)
+            if Line[-1]==&#34;&#34;: Line.pop(-1)
+            self.optogeneticsN = len(Line)
+            self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsTargetX = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetY = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetZ = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetXYSpace = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTargetZSpace = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTargetZDevice = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTime = [&#34;None&#34;]*self.optogeneticsN
+            
+            #These won&#39;t be populated in this case
+            self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
+            
+            for i in np.arange(self.optogeneticsN):
+                line = Line[i]
+                sline = line.split(&#34;\t&#34;)
+                self.optogeneticsFrameCount[i] = int(sline[0])
+                self.optogeneticsNPulses[i] = int(sline[1])
+                self.optogeneticsRepRateDivider[i] = int(sline[2])
+                self.optogeneticsTargetX[i] = float(sline[3])
+                self.optogeneticsTargetY[i] = float(sline[4])
+                self.optogeneticsTargetZ[i] = float(sline[5])
+                self.optogeneticsTargetXYSpace[i] = sline[6]
+                self.optogeneticsTargetZSpace[i] = sline[7]
+                self.optogeneticsTargetZDevice[i] = sline[8]
+                self.optogeneticsTime[i] = sline[9]
+                
+        elif Line[0] == &#34;frameCount\tnPulses\trepRateDivider\tnTrains\ttimeBtwTrains\toptogTargetX\toptogTargetY\toptogTargetZ\toptogTargetXYSpace\toptogTargetZSpace\toptogTargetZDevice\tTime\n&#34;:
+            Line.pop(0)
+            if Line[-1]==&#34;&#34;: Line.pop(-1)
+            self.optogeneticsN = len(Line)
+            self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
+            self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetX = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetY = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetZ = np.zeros(self.optogeneticsN)
+            self.optogeneticsTargetXYSpace = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTargetZSpace = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTargetZDevice = [&#34;None&#34;]*self.optogeneticsN
+            self.optogeneticsTime = [&#34;None&#34;]*self.optogeneticsN
+            
+            for i in np.arange(self.optogeneticsN):
+                line = Line[i]
+                sline = line.split(&#34;\t&#34;)
+                self.optogeneticsFrameCount[i] = int(sline[0])
+                self.optogeneticsNPulses[i] = int(sline[1])
+                self.optogeneticsRepRateDivider[i] = int(sline[2])
+                self.optogeneticsNTrains[i] = int(sline[3])
+                self.optogeneticsTimeBtwTrains[i] = float(sline[4])
+                self.optogeneticsTargetX[i] = float(sline[5])
+                self.optogeneticsTargetY[i] = float(sline[6])
+                self.optogeneticsTargetZ[i] = float(sline[7])
+                self.optogeneticsTargetXYSpace[i] = sline[8]
+                self.optogeneticsTargetZSpace[i] = sline[9]
+                self.optogeneticsTargetZDevice[i] = sline[10]
+                self.optogeneticsTime[i] = sline[11]
+    
+    else:
+        self.optogeneticsType = &#34;None&#34;</code></pre>
+</details>
+</dd>
+<dt id="wormdatamodel.data.recording.get_volume"><code class="name flex">
+<span>def <span class="ident">get_volume</span></span>(<span>self, i)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the i-th volume, either taking it from the buffer or loading it
+from file.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_volume(self, i):
+    &#39;&#39;&#39;Returns the i-th volume, either taking it from the buffer or loading it
+    from file.
+    &#39;&#39;&#39;
+    #FramesIdx, = np.where(self.stackIdx == i)
+    #firstFrame = FramesIdx[0]
+    #lastFrame = FramesIdx[-1]
+    firstFrame = self.volumeFirstFrame[i]
+    lastFrame = self.volumeFirstFrame[i+1]
+    print(firstFrame,lastFrame)
+    #print(firstFrame,lastFrame)
+    volumeZ = np.zeros(lastFrame-firstFrame)
+    
+    if firstFrame in self.frameBufferIndexes:
+        firstFrame = np.where(self.frameBufferIndexes==firstFrame)[0][0]
+        lastFrame = np.where(self.frameBufferIndexes==lastFrame)[0][0]  
+        vol = wormdm.data.volume(self.frame[firstFrame:lastFrame], 
+                     volumeZ) #[i]
+    else:
+        vol = wormdm.data.volume(self.load_framesStandAlone(firstFrame,lastFrame-1),
+                     volumeZ) #[i]
+                     
+    return vol</code></pre>
 </details>
 </dd>
 <dt id="wormdatamodel.data.recording.get_events"><code class="name flex">
@@ -1338,77 +1784,36 @@ with keys 'type', 'n_pulses', 'rep_rate_divider', 'n_trains',
     return events</code></pre>
 </details>
 </dd>
-<dt id="wormdatamodel.data.recording.get_volume"><code class="name flex">
-<span>def <span class="ident">get_volume</span></span>(<span>self, i)</span>
+<dt id="wormdatamodel.data.recording.load_frames_onebyone"><code class="name flex">
+<span>def <span class="ident">load_frames_onebyone</span></span>(<span>self, startFrame=0, stopFrame=-1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Returns the i-th volume, either taking it from the buffer or loading it
-from file.</p></div>
+<div class="desc"><p>Loads the specified frames into the buffer.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_volume(self, i):
-    &#39;&#39;&#39;Returns the i-th volume, either taking it from the buffer or loading it
-    from file.
+<pre><code class="python">def load_frames_onebyone(self, startFrame=0, stopFrame=-1):
     &#39;&#39;&#39;
-    #FramesIdx, = np.where(self.stackIdx == i)
-    #firstFrame = FramesIdx[0]
-    #lastFrame = FramesIdx[-1]
-    firstFrame = self.volumeFirstFrame[i]
-    lastFrame = self.volumeFirstFrame[i+1]
-    print(firstFrame,lastFrame)
-    #print(firstFrame,lastFrame)
-    volumeZ = np.zeros(lastFrame-firstFrame)
+    Loads the specified frames into the buffer.
+    &#39;&#39;&#39;
     
-    if firstFrame in self.frameBufferIndexes:
-        firstFrame = np.where(self.frameBufferIndexes==firstFrame)[0][0]
-        lastFrame = np.where(self.frameBufferIndexes==lastFrame)[0][0]  
-        vol = wormdm.data.volume(self.frame[firstFrame:lastFrame], 
-                     volumeZ) #[i]
-    else:
-        vol = wormdm.data.volume(self.load_framesStandAlone(firstFrame,lastFrame-1),
-                     volumeZ) #[i]
-                     
-    return vol</code></pre>
-</details>
-</dd>
-<dt id="wormdatamodel.data.recording.load"><code class="name flex">
-<span>def <span class="ident">load</span></span>(<span>self, *args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def load(self, *args, **kwargs):
-    if self.rectype==&#34;3d&#34;:
-        self._load_3d(*args, **kwargs)
-    elif self.rectype==&#34;2d&#34;:
-        self._load_2d(*args, **kwargs)</code></pre>
-</details>
-</dd>
-<dt id="wormdatamodel.data.recording.load_extra"><code class="name flex">
-<span>def <span class="ident">load_extra</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Load metadata for the recording, implicitly choosing the type of
-metadata depending on the recording type (2D or 3D). Loads directly in
-the class variables, does not return anything.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def load_extra(self):
-    &#39;&#39;&#39;Load metadata for the recording, implicitly choosing the type of
-    metadata depending on the recording type (2D or 3D). Loads directly in
-    the class variables, does not return anything.
-    &#39;&#39;&#39;
-    if self.rectype==&#34;3d&#34;:
-        self._load_extra_3d()
-    elif self.rectype==&#34;2d&#34;:
-        self._load_extra_2d()</code></pre>
+    # Go to desired start frame
+    self.file.seek(self.frameSizeBytes*startFrame)
+    
+    i = 0
+    while self.load_frame( startFrame + i,
+            (self.frameBufferPosition + i) % self.frameBufferSize ):
+        i += 1
+        if stopFrame != -1 and i == (stopFrame-startFrame): break
+
+    # Update the variables storing the positions in the file and in the 
+    # buffer. TODO controlla questi i+1
+    self.frameBufferPosition = (self.frameBufferPosition + i +1) % \
+                               self.frameBufferSize
+    
+    self.filePosition = self.file.tell()
+    self.frameLastLoaded = startFrame + i</code></pre>
 </details>
 </dd>
 <dt id="wormdatamodel.data.recording.load_frame"><code class="name flex">
@@ -1498,58 +1903,6 @@ the class itself.</p></div>
     f.seek(position)</code></pre>
 </details>
 </dd>
-<dt id="wormdatamodel.data.recording.load_frames"><code class="name flex">
-<span>def <span class="ident">load_frames</span></span>(<span>self, startFrame=0, frameN=0)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Loads the specified frames into the class buffer, from a file in which
-each frame in each channel is contiguously stored (line0R, line1R, &hellip;,
-line0G, line1G, &hellip;)</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>startFrame</code></strong> :&ensp;<code>int (optional)</code></dt>
-<dd>First frame to load, in the file reference frame (not absolute frame
-count). Default: 0.</dd>
-<dt><strong><code>frameN</code></strong> :&ensp;<code>int (optional)</code></dt>
-<dd>Number of frames to load.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def load_frames(self, startFrame=0, frameN=0):
-    &#39;&#39;&#39;Loads the specified frames into the class buffer, from a file in which
-    each frame in each channel is contiguously stored (line0R, line1R, ...,
-    line0G, line1G, ...)
-    
-    Parameters
-    ----------
-    startFrame: int (optional)
-        First frame to load, in the file reference frame (not absolute frame
-        count). Default: 0.
-    frameN: int (optional)
-        Number of frames to load.
-    &#39;&#39;&#39;
-    
-    # Open file
-    self.file = open(self.foldername+self.filenameFrames, &#39;br&#39;)
-    # Go to desired start frame
-    self.file.seek(self.frameSizeBytes*startFrame)
-    
-    self.frame = np.fromfile(self.file, dtype=self.frameDType, 
-                    count=frameN*self.frameSize).reshape(
-                    frameN,self.channelN,
-                    self.channelSizeY,self.channelSizeX)
-                    
-    self.filePosition = self.file.tell()
-    # Close file
-    self.file.close()
-    self.frameLastLoaded = startFrame+frameN
-    
-    self.frameBufferIndexes = np.arange(startFrame,
-                                    startFrame+frameN).astype(np.uint32)</code></pre>
-</details>
-</dd>
 <dt id="wormdatamodel.data.recording.load_framesStandAlone"><code class="name flex">
 <span>def <span class="ident">load_framesStandAlone</span></span>(<span>self, startFrame, stopFrame)</span>
 </code></dt>
@@ -1596,175 +1949,6 @@ without storing them in an attribute of the class itself.</p></div>
     
     # Go back to the previous position
     f.seek(position)</code></pre>
-</details>
-</dd>
-<dt id="wormdatamodel.data.recording.load_frames_legacy"><code class="name flex">
-<span>def <span class="ident">load_frames_legacy</span></span>(<span>self, startFrame=0, frameN=0)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Loads the specified frames into the buffer from a file in which the
-image is stored line0R,line0G,line1R,line1G,&hellip;</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>startFrame</code></strong> :&ensp;<code>int (optional)</code></dt>
-<dd>First frame to load, in the file reference frame (not absolute frame
-count). Default: 0.</dd>
-<dt><strong><code>frameN</code></strong> :&ensp;<code>int (optional)</code></dt>
-<dd>Number of frames to load.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def load_frames_legacy(self, startFrame=0, frameN=0):
-    &#39;&#39;&#39;Loads the specified frames into the buffer from a file in which the
-    image is stored line0R,line0G,line1R,line1G,...
-    
-    Parameters
-    ----------
-    startFrame: int (optional)
-        First frame to load, in the file reference frame (not absolute frame
-        count). Default: 0.
-    frameN: int (optional)
-        Number of frames to load.
-    &#39;&#39;&#39;
-    
-    # Pre-allocate the memory for the frames          
-    self.frame = np.empty((frameN,self.channelN,
-                           self.channelSizeY,self.channelSizeX),
-                           dtype=np.uint16)
-    # Load                       
-    wormdm.data.load_frames_legacy(self.foldername+self.filenameFrames, 
-                               (np.int32)(startFrame), (np.int32)(frameN), 
-                               (np.int32)(self.channelSizeX), 
-                               (np.int32)(self.channelSizeY),
-                               self.frame)
-    
-    self.frameLastLoaded = startFrame+frameN
-    
-    self.frameBufferIndexes = np.arange(startFrame,
-                                    startFrame+frameN).astype(np.uint32)</code></pre>
-</details>
-</dd>
-<dt id="wormdatamodel.data.recording.load_frames_onebyone"><code class="name flex">
-<span>def <span class="ident">load_frames_onebyone</span></span>(<span>self, startFrame=0, stopFrame=-1)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Loads the specified frames into the buffer.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def load_frames_onebyone(self, startFrame=0, stopFrame=-1):
-    &#39;&#39;&#39;
-    Loads the specified frames into the buffer.
-    &#39;&#39;&#39;
-    
-    # Go to desired start frame
-    self.file.seek(self.frameSizeBytes*startFrame)
-    
-    i = 0
-    while self.load_frame( startFrame + i,
-            (self.frameBufferPosition + i) % self.frameBufferSize ):
-        i += 1
-        if stopFrame != -1 and i == (stopFrame-startFrame): break
-
-    # Update the variables storing the positions in the file and in the 
-    # buffer. TODO controlla questi i+1
-    self.frameBufferPosition = (self.frameBufferPosition + i +1) % \
-                               self.frameBufferSize
-    
-    self.filePosition = self.file.tell()
-    self.frameLastLoaded = startFrame + i</code></pre>
-</details>
-</dd>
-<dt id="wormdatamodel.data.recording.load_optogenetics"><code class="name flex">
-<span>def <span class="ident">load_optogenetics</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Load optogenetics metadata. Automatically detects a couple of
-saving configurations, that have changed in time.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def load_optogenetics(self):
-    &#39;&#39;&#39;Load optogenetics metadata. Automatically detects a couple of 
-    saving configurations, that have changed in time.
-    &#39;&#39;&#39;
-    if os.path.isfile(self.foldername+self.filenameOptogeneticsTwoPhoton):
-        self.optogeneticsType = &#34;twoPhoton&#34;
-        optogeneticsF = open(self.foldername+self.filenameOptogeneticsTwoPhoton)
-        Line = optogeneticsF.readlines()
-        optogeneticsF.close()
-        if Line[0] == &#34;frameCount\tnPulses\trepRateDivider\toptogTargetX\toptogTargetY\toptogTargetZ\toptogTargetXYSpace\toptogTargetZSpace\toptogTargetZDevice\tTime\n&#34;:
-            Line.pop(0)
-            if Line[-1]==&#34;&#34;: Line.pop(-1)
-            self.optogeneticsN = len(Line)
-            self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=np.int)
-            self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=np.int)
-            self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=np.int)
-            self.optogeneticsTargetX = np.zeros(self.optogeneticsN)
-            self.optogeneticsTargetY = np.zeros(self.optogeneticsN)
-            self.optogeneticsTargetZ = np.zeros(self.optogeneticsN)
-            self.optogeneticsTargetXYSpace = [&#34;None&#34;]*self.optogeneticsN
-            self.optogeneticsTargetZSpace = [&#34;None&#34;]*self.optogeneticsN
-            self.optogeneticsTargetZDevice = [&#34;None&#34;]*self.optogeneticsN
-            self.optogeneticsTime = [&#34;None&#34;]*self.optogeneticsN
-            
-            #These won&#39;t be populated in this case
-            self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
-            self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
-            
-            for i in np.arange(self.optogeneticsN):
-                line = Line[i]
-                sline = line.split(&#34;\t&#34;)
-                self.optogeneticsFrameCount[i] = int(sline[0])
-                self.optogeneticsNPulses[i] = int(sline[1])
-                self.optogeneticsRepRateDivider[i] = int(sline[2])
-                self.optogeneticsTargetX[i] = float(sline[3])
-                self.optogeneticsTargetY[i] = float(sline[4])
-                self.optogeneticsTargetZ[i] = float(sline[5])
-                self.optogeneticsTargetXYSpace[i] = sline[6]
-                self.optogeneticsTargetZSpace[i] = sline[7]
-                self.optogeneticsTargetZDevice[i] = sline[8]
-                self.optogeneticsTime[i] = sline[9]
-                
-        elif Line[0] == &#34;frameCount\tnPulses\trepRateDivider\tnTrains\ttimeBtwTrains\toptogTargetX\toptogTargetY\toptogTargetZ\toptogTargetXYSpace\toptogTargetZSpace\toptogTargetZDevice\tTime\n&#34;:
-            Line.pop(0)
-            if Line[-1]==&#34;&#34;: Line.pop(-1)
-            self.optogeneticsN = len(Line)
-            self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=np.int)
-            self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=np.int)
-            self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=np.int)
-            self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
-            self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
-            self.optogeneticsTargetX = np.zeros(self.optogeneticsN)
-            self.optogeneticsTargetY = np.zeros(self.optogeneticsN)
-            self.optogeneticsTargetZ = np.zeros(self.optogeneticsN)
-            self.optogeneticsTargetXYSpace = [&#34;None&#34;]*self.optogeneticsN
-            self.optogeneticsTargetZSpace = [&#34;None&#34;]*self.optogeneticsN
-            self.optogeneticsTargetZDevice = [&#34;None&#34;]*self.optogeneticsN
-            self.optogeneticsTime = [&#34;None&#34;]*self.optogeneticsN
-            
-            for i in np.arange(self.optogeneticsN):
-                line = Line[i]
-                sline = line.split(&#34;\t&#34;)
-                self.optogeneticsFrameCount[i] = int(sline[0])
-                self.optogeneticsNPulses[i] = int(sline[1])
-                self.optogeneticsRepRateDivider[i] = int(sline[2])
-                self.optogeneticsNTrains[i] = int(sline[3])
-                self.optogeneticsTimeBtwTrains[i] = float(sline[4])
-                self.optogeneticsTargetX[i] = float(sline[5])
-                self.optogeneticsTargetY[i] = float(sline[6])
-                self.optogeneticsTargetZ[i] = float(sline[7])
-                self.optogeneticsTargetXYSpace[i] = sline[8]
-                self.optogeneticsTargetZSpace[i] = sline[9]
-                self.optogeneticsTargetZDevice[i] = sline[10]
-                self.optogeneticsTime[i] = sline[11]
-    
-    else:
-        self.optogeneticsType = &#34;None&#34;</code></pre>
 </details>
 </dd>
 </dl>
@@ -1826,76 +2010,83 @@ saving configurations, that have changed in time.</p></div>
 <li><code><a title="wormdatamodel.data.redtogreen" href="redtogreen.html">wormdatamodel.data.redtogreen</a></code></li>
 </ul>
 </li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="wormdatamodel.data.load_frames_legacy" href="#wormdatamodel.data.load_frames_legacy">load_frames_legacy</a></code></li>
+<li><code><a title="wormdatamodel.data.redToGreen" href="#wormdatamodel.data.redToGreen">redToGreen</a></code></li>
+<li><code><a title="wormdatamodel.data.genRedToGreen" href="#wormdatamodel.data.genRedToGreen">genRedToGreen</a></code></li>
+</ul>
+</li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
 <h4><code><a title="wormdatamodel.data.recording" href="#wormdatamodel.data.recording">recording</a></code></h4>
 <ul class="">
+<li><code><a title="wormdatamodel.data.recording.load" href="#wormdatamodel.data.recording.load">load</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.free_memory" href="#wormdatamodel.data.recording.free_memory">free_memory</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_frames" href="#wormdatamodel.data.recording.load_frames">load_frames</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_frames_legacy" href="#wormdatamodel.data.recording.load_frames_legacy">load_frames_legacy</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_extra" href="#wormdatamodel.data.recording.load_extra">load_extra</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_optogenetics" href="#wormdatamodel.data.recording.load_optogenetics">load_optogenetics</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.get_volume" href="#wormdatamodel.data.recording.get_volume">get_volume</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.get_events" href="#wormdatamodel.data.recording.get_events">get_events</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_frames_onebyone" href="#wormdatamodel.data.recording.load_frames_onebyone">load_frames_onebyone</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_frame" href="#wormdatamodel.data.recording.load_frame">load_frame</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_frameStandAlone" href="#wormdatamodel.data.recording.load_frameStandAlone">load_frameStandAlone</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.load_framesStandAlone" href="#wormdatamodel.data.recording.load_framesStandAlone">load_framesStandAlone</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frame" href="#wormdatamodel.data.recording.frame">frame</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameN" href="#wormdatamodel.data.recording.frameN">frameN</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameTime" href="#wormdatamodel.data.recording.frameTime">frameTime</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameCount" href="#wormdatamodel.data.recording.frameCount">frameCount</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.Z" href="#wormdatamodel.data.recording.Z">Z</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.nVolume" href="#wormdatamodel.data.recording.nVolume">nVolume</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.volumeIndex" href="#wormdatamodel.data.recording.volumeIndex">volumeIndex</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.volumeFirstFrame" href="#wormdatamodel.data.recording.volumeFirstFrame">volumeFirstFrame</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.volumeDirection" href="#wormdatamodel.data.recording.volumeDirection">volumeDirection</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.ZZ" href="#wormdatamodel.data.recording.ZZ">ZZ</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.channelN" href="#wormdatamodel.data.recording.channelN">channelN</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.channelSize" href="#wormdatamodel.data.recording.channelSize">channelSize</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.dt" href="#wormdatamodel.data.recording.dt">dt</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.piezoFrequency" href="#wormdatamodel.data.recording.piezoFrequency">piezoFrequency</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.latencyShift" href="#wormdatamodel.data.recording.latencyShift">latencyShift</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.rectype" href="#wormdatamodel.data.recording.rectype">rectype</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.legacy" href="#wormdatamodel.data.recording.legacy">legacy</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.channelSizeX" href="#wormdatamodel.data.recording.channelSizeX">channelSizeX</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.channelSizeY" href="#wormdatamodel.data.recording.channelSizeY">channelSizeY</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.dt" href="#wormdatamodel.data.recording.dt">dt</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.channelN" href="#wormdatamodel.data.recording.channelN">channelN</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameBitDepth" href="#wormdatamodel.data.recording.frameBitDepth">frameBitDepth</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.channelSize" href="#wormdatamodel.data.recording.channelSize">channelSize</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameSize" href="#wormdatamodel.data.recording.frameSize">frameSize</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameDType" href="#wormdatamodel.data.recording.frameDType">frameDType</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameSizeBytes" href="#wormdatamodel.data.recording.frameSizeBytes">frameSizeBytes</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameBinning" href="#wormdatamodel.data.recording.frameBinning">frameBinning</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameCountOffset" href="#wormdatamodel.data.recording.frameCountOffset">frameCountOffset</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.framePixelOffset" href="#wormdatamodel.data.recording.framePixelOffset">framePixelOffset</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameUmPerPixel" href="#wormdatamodel.data.recording.frameUmPerPixel">frameUmPerPixel</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.framePixelPerUm" href="#wormdatamodel.data.recording.framePixelPerUm">framePixelPerUm</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.memorySaturated" href="#wormdatamodel.data.recording.memorySaturated">memorySaturated</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameBufferLock" href="#wormdatamodel.data.recording.frameBufferLock">frameBufferLock</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameLastLoaded" href="#wormdatamodel.data.recording.frameLastLoaded">frameLastLoaded</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.frameBufferPosition" href="#wormdatamodel.data.recording.frameBufferPosition">frameBufferPosition</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.filePosition" href="#wormdatamodel.data.recording.filePosition">filePosition</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.foldername" href="#wormdatamodel.data.recording.foldername">foldername</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.filename" href="#wormdatamodel.data.recording.filename">filename</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.filenameFrames" href="#wormdatamodel.data.recording.filenameFrames">filenameFrames</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.filenameFramesDetails" href="#wormdatamodel.data.recording.filenameFramesDetails">filenameFramesDetails</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.filenameOptogeneticsTwoPhoton" href="#wormdatamodel.data.recording.filenameOptogeneticsTwoPhoton">filenameOptogeneticsTwoPhoton</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.filenameOtherFrameSynchronous" href="#wormdatamodel.data.recording.filenameOtherFrameSynchronous">filenameOtherFrameSynchronous</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.filenameZDetails" href="#wormdatamodel.data.recording.filenameZDetails">filenameZDetails</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.foldername" href="#wormdatamodel.data.recording.foldername">foldername</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frame" href="#wormdatamodel.data.recording.frame">frame</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameBinning" href="#wormdatamodel.data.recording.frameBinning">frameBinning</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameBitDepth" href="#wormdatamodel.data.recording.frameBitDepth">frameBitDepth</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameBufferLock" href="#wormdatamodel.data.recording.frameBufferLock">frameBufferLock</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameBufferPosition" href="#wormdatamodel.data.recording.frameBufferPosition">frameBufferPosition</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameCount" href="#wormdatamodel.data.recording.frameCount">frameCount</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameCountOffset" href="#wormdatamodel.data.recording.frameCountOffset">frameCountOffset</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameDType" href="#wormdatamodel.data.recording.frameDType">frameDType</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameLastLoaded" href="#wormdatamodel.data.recording.frameLastLoaded">frameLastLoaded</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameN" href="#wormdatamodel.data.recording.frameN">frameN</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.framePixelOffset" href="#wormdatamodel.data.recording.framePixelOffset">framePixelOffset</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.framePixelPerUm" href="#wormdatamodel.data.recording.framePixelPerUm">framePixelPerUm</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameSize" href="#wormdatamodel.data.recording.frameSize">frameSize</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameSizeBytes" href="#wormdatamodel.data.recording.frameSizeBytes">frameSizeBytes</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameTime" href="#wormdatamodel.data.recording.frameTime">frameTime</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.frameUmPerPixel" href="#wormdatamodel.data.recording.frameUmPerPixel">frameUmPerPixel</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.free_memory" href="#wormdatamodel.data.recording.free_memory">free_memory</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.get_events" href="#wormdatamodel.data.recording.get_events">get_events</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.get_volume" href="#wormdatamodel.data.recording.get_volume">get_volume</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.latencyShift" href="#wormdatamodel.data.recording.latencyShift">latencyShift</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.legacy" href="#wormdatamodel.data.recording.legacy">legacy</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.load" href="#wormdatamodel.data.recording.load">load</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.load_extra" href="#wormdatamodel.data.recording.load_extra">load_extra</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.load_frame" href="#wormdatamodel.data.recording.load_frame">load_frame</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.load_frameStandAlone" href="#wormdatamodel.data.recording.load_frameStandAlone">load_frameStandAlone</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.load_frames" href="#wormdatamodel.data.recording.load_frames">load_frames</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.load_framesStandAlone" href="#wormdatamodel.data.recording.load_framesStandAlone">load_framesStandAlone</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.load_frames_legacy" href="#wormdatamodel.data.recording.load_frames_legacy">load_frames_legacy</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.load_frames_onebyone" href="#wormdatamodel.data.recording.load_frames_onebyone">load_frames_onebyone</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.load_optogenetics" href="#wormdatamodel.data.recording.load_optogenetics">load_optogenetics</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.memorySaturated" href="#wormdatamodel.data.recording.memorySaturated">memorySaturated</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.nVolume" href="#wormdatamodel.data.recording.nVolume">nVolume</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.optogeneticsFrameCount" href="#wormdatamodel.data.recording.optogeneticsFrameCount">optogeneticsFrameCount</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.filenameOptogeneticsTwoPhoton" href="#wormdatamodel.data.recording.filenameOptogeneticsTwoPhoton">filenameOptogeneticsTwoPhoton</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.optogeneticsN" href="#wormdatamodel.data.recording.optogeneticsN">optogeneticsN</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.optogeneticsFrameCount" href="#wormdatamodel.data.recording.optogeneticsFrameCount">optogeneticsFrameCount</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.optogeneticsNPulses" href="#wormdatamodel.data.recording.optogeneticsNPulses">optogeneticsNPulses</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.optogeneticsNTrains" href="#wormdatamodel.data.recording.optogeneticsNTrains">optogeneticsNTrains</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.optogeneticsRepRateDivider" href="#wormdatamodel.data.recording.optogeneticsRepRateDivider">optogeneticsRepRateDivider</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.optogeneticsNTrains" href="#wormdatamodel.data.recording.optogeneticsNTrains">optogeneticsNTrains</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.optogeneticsTimeBtwTrains" href="#wormdatamodel.data.recording.optogeneticsTimeBtwTrains">optogeneticsTimeBtwTrains</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.optogeneticsTargetX" href="#wormdatamodel.data.recording.optogeneticsTargetX">optogeneticsTargetX</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.optogeneticsTargetXYSpace" href="#wormdatamodel.data.recording.optogeneticsTargetXYSpace">optogeneticsTargetXYSpace</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.optogeneticsTargetY" href="#wormdatamodel.data.recording.optogeneticsTargetY">optogeneticsTargetY</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.optogeneticsTargetZ" href="#wormdatamodel.data.recording.optogeneticsTargetZ">optogeneticsTargetZ</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.optogeneticsTargetZDevice" href="#wormdatamodel.data.recording.optogeneticsTargetZDevice">optogeneticsTargetZDevice</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.optogeneticsTargetXYSpace" href="#wormdatamodel.data.recording.optogeneticsTargetXYSpace">optogeneticsTargetXYSpace</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.optogeneticsTargetZSpace" href="#wormdatamodel.data.recording.optogeneticsTargetZSpace">optogeneticsTargetZSpace</a></code></li>
+<li><code><a title="wormdatamodel.data.recording.optogeneticsTargetZDevice" href="#wormdatamodel.data.recording.optogeneticsTargetZDevice">optogeneticsTargetZDevice</a></code></li>
 <li><code><a title="wormdatamodel.data.recording.optogeneticsTime" href="#wormdatamodel.data.recording.optogeneticsTime">optogeneticsTime</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.optogeneticsTimeBtwTrains" href="#wormdatamodel.data.recording.optogeneticsTimeBtwTrains">optogeneticsTimeBtwTrains</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.piezoFrequency" href="#wormdatamodel.data.recording.piezoFrequency">piezoFrequency</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.rectype" href="#wormdatamodel.data.recording.rectype">rectype</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.volumeDirection" href="#wormdatamodel.data.recording.volumeDirection">volumeDirection</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.volumeFirstFrame" href="#wormdatamodel.data.recording.volumeFirstFrame">volumeFirstFrame</a></code></li>
-<li><code><a title="wormdatamodel.data.recording.volumeIndex" href="#wormdatamodel.data.recording.volumeIndex">volumeIndex</a></code></li>
 </ul>
 </li>
 <li>

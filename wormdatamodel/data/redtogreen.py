@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 '''
 Contains functions related to the mapping between the red and the green
-channels of the frames.
+channels of the frames. Its functions are made available in the 
+wormdatamodel.data namespace.
 
 Imports
 -------
