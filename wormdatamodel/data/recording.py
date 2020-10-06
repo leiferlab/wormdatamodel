@@ -499,6 +499,7 @@ class recording:
         nans, x = np.isnan(self.Z), lambda z: z.nonzero()[0]
         self.Z[nans]= np.interp(x(nans), x(~nans), self.Z[~nans])
         self.volumeDirection[nans] = np.interp(x(nans), x(~nans), self.volumeDirection[~nans]).astype(np.float)#FIXME astype(np.int8)
+        volumeIndex[nans]= np.interp(x(nans), x(~nans), volumeIndex[~nans])
         
         # Use the derivative of Z to determine the volumeDirection, instead of
         # the output of the differentiator. The latter has some problems...
@@ -524,6 +525,8 @@ class recording:
         # self.volumeFirstFrame.
         self.volumeFirstFrame = np.where(np.diff(volumeIndex)==1)[0]+1
         self.nVolume = len(self.volumeFirstFrame)-2
+        a, b = np.unique(np.diff(self.volumeFirstFrame), return_counts=True)
+        self.Dt = round(a[np.argmax(b)],3)*self.dt
         
         # Get the details about the Z scan. The values in the DAQ file are in V.
         # The file contains also the etlCalibrationMindpt and Maxdpt, which 
@@ -560,6 +563,7 @@ class recording:
         self.T = framesDetails[0]
         a, b = np.unique(np.diff(self.T), return_counts=True)
         self.dt = round(a[np.argmax(b)],3)
+        self.Dt = self.dt
         self.frameCount = framesDetails[1].astype(int)
         self.nVolume = self.frameCount.shape[0]
         
