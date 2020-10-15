@@ -170,6 +170,8 @@ class recording:
             self.foldername = foldername+"/"
         self.filename = self.foldername+self.filenameFrames
         
+        if os.path.isfile(folder+'recording.pickle'):
+        
         self.legacy = legacy
         
         if rectype == None:
@@ -531,20 +533,27 @@ class recording:
         # Get the details about the Z scan. The values in the DAQ file are in V.
         # The file contains also the etlCalibrationMindpt and Maxdpt, which 
         # correspond to the diopters corresponding to 0 and 5 V, respectively.
-        try:
-            fz = open(self.foldername+self.filenameZDetails)
-            zDetails = json.load(fz)
-            fz.close()
-            zUmOverV = 1./zDetails["V/um"]
-        except:
-            zUmOverV = 1./0.05
+        #try:
+        fz = open(self.foldername+self.filenameZDetails)
+        zDetails = json.load(fz)
+        fz.close()
+        self.zUmOverV = 1./zDetails["V/um"]
+        if "etlCalibrationMindpt" in zDetails.keys():
+            self.etlCalibrationMindpt = zDetails["etlCalibrationMindpt"]
+            self.etlCalibrationMaxdpt = zDetails["etlCalibrationMaxdpt"]
+            self.etlVMin = zDetails["etlVMin"]
+            self.etlVMax = zDetails["etlVMax"]
+            self.etlDptOverUm = zDetails["etl dpt/um"]
+            self.etlVOverDpt = (self.etlVMax-self.etlVMin) / (self.etlCalibrationMaxdpt-self.etlCalibrationMindpt)
+        #except:
+            #self.zUmOverV = 1./0.0625
         
         # Build the list ZZ of Z split in different volumes
         self.ZZ = []
         for k in np.arange(len(self.volumeFirstFrame)-1):
             frame0 = self.volumeFirstFrame[k]
             framef = self.volumeFirstFrame[k+1]
-            zeta = self.Z[frame0:framef]*zUmOverV*self.framePixelPerUm
+            zeta = self.Z[frame0:framef]*self.zUmOverV*self.framePixelPerUm
             # TODO is this really necessary? Isn't it already in it?
             #zeta = zeta - np.average(zeta)
             #if self.volumeDirection[frame0] == 0: zeta *= -1
@@ -566,6 +575,7 @@ class recording:
         self.Dt = self.dt
         self.frameCount = framesDetails[1].astype(int)
         self.nVolume = self.frameCount.shape[0]
+        self.zUmOverV = 1.0
         
         
     def load_optogenetics(self):
@@ -642,6 +652,12 @@ class recording:
                     self.optogeneticsTargetZSpace[i] = sline[9]
                     self.optogeneticsTargetZDevice[i] = sline[10]
                     self.optogeneticsTime[i] = sline[11]
+                    
+                    
+                    if self.optogeneticsTargetZSpace[i] == "etl0 space" and self.optogeneticsTargetZDevice[i] == "tunable lens":
+                        # If the device is the etl0 tunable lens, convert z to the corresponding voltage output by the DAQ card
+                        self.optogeneticsTargetZ[i] += (self.etlCalibrationMaxdpt-self.etlCalibrationMindpt)/2.0
+                        self.optogeneticsTargetZ[i] *=  self.framePixelPerUm/self.etlDptOverUm
         
         else:
             self.optogeneticsType = "None"
@@ -683,14 +699,17 @@ class recording:
                          
         return vol
         
-    def get_events(self, shift=0):
+    def get_events(self, shift=0, shift_vol=0):
         '''Returns metadata about events happened during the measurement, like
         optogenetics stimulations. 
         
         Parameters
         ----------
         shift: int (optional)
-            Index of the first event to be considered.
+            Shift in frames from the event.
+            
+        shift_vol: int (optional)
+            Shift in volumes from the event.
         
         Returns
         -------
@@ -718,7 +737,7 @@ class recording:
             index[i] = np.argmin(d)
             
         if self.rectype == "3d":
-            index = self.volumeIndex[index]
+            index = self.volumeIndex[index]-shift_vol
             
         ampl_indices = np.zeros(len(index)+2)
         ampl_indices[1:-1] = index

@@ -25,7 +25,7 @@ class Signal:
     info = [];
     whichSkip = dict(zip([],[])); # which strides should be ignored
     
-    def __init__(self,data,info,strides = [], strideNames = [], strideSkip = [], preprocess = True):
+    def __init__(self,data,info,strides = [], strideNames = [], strideSkip = [], preprocess = True, smooth_n=4):
         '''Constructor for the class. 
         
         Parameters
@@ -47,7 +47,7 @@ class Signal:
             Apply the preprocessing to the signal. Default: True.        
         '''
         
-        NS = 4; # smoothing parameter
+        self.smooth_n = smooth_n; # smoothing parameter
         
         self.data = data;
         self.info = info;
@@ -56,7 +56,7 @@ class Signal:
         if preprocess:
             # interpolate
             self.data = self.interpolate_nans();
-            self.data = self.smooth(NS);
+            self.data = self.smooth(smooth_n);
         
         # strides option allows you to construct an irregular array
         self.whichSkip = dict(zip(strideNames,strideSkip))

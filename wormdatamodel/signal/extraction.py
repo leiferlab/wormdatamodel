@@ -142,6 +142,12 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         box_size = kwargs['box_size']
         nElements = np.prod(box_size)
         
+        try: select_max = kwargs['select_max']
+        except: select_max = False
+        
+        try: select_max_n = kwargs['select_max_n']
+        except: select_max_n = 5
+        
         if len(box_size)!=nCoord:
             print("Number of coordinates in Neuron coordinate and box_size "+\
                 "don't match.")
@@ -155,7 +161,10 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         
         # Reshape and sum values in each box
         Values = Values.reshape((nNeuron,nElements))
-        Signal = np.average(Values, axis=1)
+        if not select_max:
+            Signal = np.average(Values, axis=1)
+        else:
+            Signal = np.average(np.sort(Values,axis=1)[:,-select_max_n:],axis=1)
     
         return Signal
     elif method=="weightedMask":
