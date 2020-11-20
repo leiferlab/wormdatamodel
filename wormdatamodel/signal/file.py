@@ -12,6 +12,8 @@ import numpy as np
 import wormdatamodel as wormdm
 import pkg_resources
 import json
+import os
+import pickle
 
 def to_file(Signal, folder, filename, method, other={}):
     '''Save signal array to a text file. The array is saved with np.savetxt,
@@ -45,9 +47,18 @@ def to_file(Signal, folder, filename, method, other={}):
             header[key] = other[key]
         except:
             pass
-    header = json.dumps(header)
+    header_string = json.dumps(header)
     
-    np.savetxt(folder+filename, Signal, header=header)
+    # Save plain text file for compatibility
+    np.savetxt(folder+filename, Signal, header=header_string)
+    
+    # Save pickled file for faster processing
+    #data = {"signal": Signal, "header": header}
+    #pickle_filename = ".".join([filename.split(".")[0],"pickle"])
+    #pickle_file = open(folder+pickle_filename,"wb")
+    #pickle.dump(data,pickle_file)
+    #pickle_file.close()
+    
     
 def from_file(folder, filename):
     '''Loads the array containing a signal array, and retrieves and parses the
@@ -70,7 +81,17 @@ def from_file(folder, filename):
     
     '''
     if folder[-1]!="/": folder+="/"
+    #pickle_filename = ".".join([filename.split(".")[0],"pickle"])
     
+    # If available, load pickled file
+    # Otherwise, load from txt file and create pickle cache
+    #if os.path.isfile(folder+pickle_filename):
+    #    f = open(folder+pickle_filename,"rb")
+    #    data = pickle.load(f)
+    #    f.close()
+    #    Signal = data["signal"]
+    #    info = data["header"]        
+    #else:
     f = open(folder+filename,"r")
     l = f.readline()
     f.close()
@@ -78,8 +99,13 @@ def from_file(folder, filename):
         info = json.loads(l[2:])
     except:
         info = {}
-        
+    
     Signal = np.loadtxt(folder+filename)
+    
+    #data = {"signal": Signal, "header": info}
+    #pickle_file = open(folder+pickle_filename,"wb")
+    #pickle.dump(data,pickle_file)
+    #pickle_file.close()
     
     return Signal, info
     

@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import json
+import pickle
 import wormdatamodel as wormdm
 
 class recording:
@@ -111,9 +112,14 @@ class recording:
     frameBufferPosition = 0
     filePosition = 0
     
+    referenceVolume = np.array([])
+    
     # Conventions on filenames
     foldername = None
+    folder = None #alias for foldername
     filename = None
+    loaded_from_cache = False
+    filenamePickle = "recording.pickle"
     filenameFrames = "sCMOS_Frames_U16_1024x512.dat" #'frames_1024x512xU16.dat'
     filenameFramesDetails = "framesDetails.txt"
     filenameOtherFrameSynchronous  = "other-frameSynchronous.txt"
@@ -135,7 +141,30 @@ class recording:
     optogeneticsTargetZDevice = ["None"]*optogeneticsN
     optogeneticsTime = ["None"]*optogeneticsN
     
-    def __init__(self, foldername, legacy=False, rectype=None, settings={}):
+    def __new__(cls, *args, **kwargs):
+        
+        if len(args)>0 or "foldername" in kwargs.keys():
+            try: foldername = args[0]
+            except: foldername = kwargs["foldername"]
+            if foldername[-1] == "/":
+                foldername = foldername
+            else:
+                foldername = foldername+"/"
+
+            if os.path.isfile(foldername+cls.filenamePickle):
+                f = open(foldername+cls.filenamePickle,"rb")
+                inst = pickle.load(f)
+                f.close()
+                inst.loaded_from_cache = True
+            else:
+                inst = super(recording, cls).__new__(cls)
+        else:
+            inst = super(recording, cls).__new__(cls)
+            
+        return inst
+            
+    
+    def __init__(self, foldername=None, legacy=False, rectype=None, settings={}):
         '''The class constructor does not load all the data, so that the class 
         can be used also in a light-weight mode. If the recording type (2d or 
         3d) is not specified, the constructor determines it based on the file
@@ -164,39 +193,44 @@ class recording:
             output. It depends, e.g., on whether the piezo and the objective
             are mounted vertically or horizontally.
         '''
-        if foldername[-1] == "/":
-            self.foldername = foldername
-        else:
-            self.foldername = foldername+"/"
-        self.filename = self.foldername+self.filenameFrames
-        
-        if os.path.isfile(folder+'recording.pickle'):
-        
-        self.legacy = legacy
-        
-        if rectype == None:
-            if os.path.isfile(foldername+self.filenameZDetails): 
-                self.rectype = "3d"
+        if foldername is not None and not self.loaded_from_cache:
+            if foldername[-1] == "/":
+                self.foldername = foldername
             else:
-                self.rectype = "2d"
-            print("Assuming it is a "+self.rectype+" recording.")
-        else:
-            self.rectype = rectype
+                self.foldername = foldername+"/"
+            self.folder = self.foldername
+            self.filename = self.foldername+self.filenameFrames
             
+            self.legacy = legacy
             
-        try:
-            self.latencyShift = settings["latencyShift"]
-        except:
-            self.latencyShift = 0
-        
-        # Load extra information
-        self.load_extra()
-        
-        # Load optogenetics information. Autodetects if present
-        self.load_optogenetics()
-        
-        self.frameBufferIndexes = np.array([])
-        self.frame = np.array([])
+            if rectype == None:
+                if os.path.isfile(foldername+self.filenameZDetails): 
+                    self.rectype = "3d"
+                else:
+                    self.rectype = "2d"
+                print("Assuming it is a "+self.rectype+" recording.")
+            else:
+                self.rectype = rectype
+                
+                
+            try:
+                self.latencyShift = settings["latencyShift"]
+            except:
+                self.latencyShift = 0
+            
+            # Load extra information
+            self.load_extra()
+            
+            # Load optogenetics information. Autodetects if present
+            self.load_optogenetics()
+            
+            self.frameBufferIndexes = np.array([])
+            self.frame = np.array([])
+            
+            # Cache the object for faster loading as pickle
+            pickle_file = open(self.foldername+self.filenamePickle,"wb")
+            pickle.dump(self,pickle_file)
+            pickle_file.close()
     
     def __enter__(self):
         return self
@@ -206,16 +240,19 @@ class recording:
         
     def load(self, *args, **kwargs):
         if self.rectype=="3d":
-            self._load_3d(*args, **kwargs)
+            im = self._load_3d(*args, **kwargs)
         elif self.rectype=="2d":
-            self._load_2d(*args, **kwargs)
+            im = self._load_2d(*args, **kwargs)
+        if "standalone" in kwargs.keys():
+            if kwargs["standalone"]:
+                return im
     
     def free_memory(self):
         del self.frame
         self.frame = np.array([])
     
     def _load_3d(self, startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, 
-                jobMaxMemory=100*2**30):
+                jobMaxMemory=100*2**30, standalone=False):
         '''Load the frames from a 3D recording. Specify either start and stop
         frames or start and number of volumes. Will not load anything if the
         estimated memory usage exceeds the maximum job memory limit. 
@@ -274,9 +311,12 @@ class recording:
             
             # Load the frames
             if self.legacy==True:
-                self.load_frames_legacy(startFrame, self.frameN)
+                im = self.load_frames_legacy(startFrame, self.frameN, standalone)
             else:
-                self.load_frames(startFrame, self.frameN)
+                im = self.load_frames(startFrame, self.frameN, standalone)
+        
+            if standalone:
+                return im
                 
         # The following is for future upgrades
         # self.frames will act as a circular buffer, so you need a system to 
@@ -291,7 +331,8 @@ class recording:
         # cannot. The simple version is to get a single lock on everything.
         #self.frameBufferLocks = np.zeros(self.frameBufferSize, dtype=np.bool)
         
-    def _load_2d(self, startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, jobMaxMemory=100*2**30):
+        
+    def _load_2d(self, startFrame=0, stopFrame=-1, startVolume=0, nVolume=-1, jobMaxMemory=100*2**30, standalone=False):
         '''Load the frames from a 2D recording. Specify either start and stop
         frames or start and number of volumes. In this case, the volume notation
         is provided to keep a uniform notation across 2D and 3D recordings.
@@ -354,12 +395,15 @@ class recording:
             
             # Load the frames
             if self.legacy==True:
-                self.load_frames_legacy(startFrame, self.frameN)
+                self.load_frames_legacy(startFrame, self.frameN, standalone)
             else:
-                self.load_frames(startFrame, self.frameN)
+                self.load_frames(startFrame, self.frameN, standalone)
+                
+            if standalone:
+                return im
             
         
-    def load_frames(self, startFrame=0, frameN=0):
+    def load_frames(self, startFrame=0, frameN=0, standalone=False):
         '''Loads the specified frames into the class buffer, from a file in which
         each frame in each channel is contiguously stored (line0R, line1R, ...,
         line0G, line1G, ...)
@@ -378,7 +422,7 @@ class recording:
         # Go to desired start frame
         self.file.seek(self.frameSizeBytes*startFrame)
         
-        self.frame = np.fromfile(self.file, dtype=self.frameDType, 
+        im = np.fromfile(self.file, dtype=self.frameDType, 
                         count=frameN*self.frameSize).reshape(
                         frameN,self.channelN,
                         self.channelSizeY,self.channelSizeX)
@@ -386,12 +430,19 @@ class recording:
         self.filePosition = self.file.tell()
         # Close file
         self.file.close()
-        self.frameLastLoaded = startFrame+frameN
         
-        self.frameBufferIndexes = np.arange(startFrame,
-                                        startFrame+frameN).astype(np.uint32)
+        if not standalone:
+            self.frame = im
+            self.frameLastLoaded = startFrame+frameN
+            
+            self.frameBufferIndexes = np.arange(startFrame,
+                                            startFrame+frameN).astype(np.uint32)
+            
+            return None
+        else:
+            return im
                                         
-    def load_frames_legacy(self, startFrame=0, frameN=0):
+    def load_frames_legacy(self, startFrame=0, frameN=0, standalone=False):
         '''Loads the specified frames into the buffer from a file in which the
         image is stored line0R,line0G,line1R,line1G,...
         
@@ -405,7 +456,7 @@ class recording:
         '''
         
         # Pre-allocate the memory for the frames          
-        self.frame = np.empty((frameN,self.channelN,
+        im = np.empty((frameN,self.channelN,
                                self.channelSizeY,self.channelSizeX),
                                dtype=np.uint16)
         # Load                       
@@ -413,12 +464,18 @@ class recording:
                                    (np.int32)(startFrame), (np.int32)(frameN), 
                                    (np.int32)(self.channelSizeX), 
                                    (np.int32)(self.channelSizeY),
-                                   self.frame)
+                                   im)
         
-        self.frameLastLoaded = startFrame+frameN
-        
-        self.frameBufferIndexes = np.arange(startFrame,
-                                        startFrame+frameN).astype(np.uint32)
+        if not standalone:
+            self.frame = im
+            self.frameLastLoaded = startFrame+frameN
+            
+            self.frameBufferIndexes = np.arange(startFrame,
+                                            startFrame+frameN).astype(np.uint32)
+                                            
+            return None
+        else:
+            return im
                                         
     def load_extra(self):
         '''Load metadata for the recording, implicitly choosing the type of
@@ -478,19 +535,29 @@ class recording:
         self.volumeDirection[:] = np.nan
         self.Z = np.empty(len(frameCount),dtype=np.float)
         self.Z[:] = np.nan
+        # Debugging arrays
+        #self.fcountfound = np.zeros(len(frameCount))
+        #self.DAQneighbor_adjacent = np.zeros(len(frameCount))
         for i in np.arange(len(frameCount)):
-            try:
-                # Find the index of the entry in the camera-trigger-synchronous
-                # data that corresponds to the absolute count frameCount[i].
-                indexInDAQ = np.where(frameCountDAQ == frameCount[i])
-                # Extract the information from that entry.
-                volumeIndex[i] = volumeIndexDAQ[indexInDAQ]
-                self.Z[i] = ZDAQ[indexInDAQ]
-                self.volumeDirection[i] = (volumeDirectionDAQ[indexInDAQ]+1)//2
-            except:
-                # If there is no matching saved frame (dropped), pass and leave
-                # nan entries. They will be interpolated below.
-                pass
+            # Find the index of the entry in the camera-trigger-synchronous
+            # data that corresponds to the absolute count frameCount[i].
+            indexInDAQ = np.where(frameCountDAQ == frameCount[i])
+            #self.fcountfound[i] = indexInDAQ[0].shape[0]
+            
+            # Extract the information from that entry, only if the DAQ counter
+            # saw that frame count only once, and if the neighboring counts
+            # are adjacent (+-1).
+            # If there is no matching saved frame (dropped), pass and leave
+            # nan entries. They will be interpolated below.
+            
+            if indexInDAQ[0].shape[0] == 1:
+                neighbor_adjacent = ((frameCountDAQ[indexInDAQ[0][0]]-frameCountDAQ[indexInDAQ[0][0]-1])==1) and ((frameCountDAQ[indexInDAQ[0][0]+1]-frameCountDAQ[indexInDAQ[0][0]])==1)
+                #self.DAQneighbor_adjacent[i] =  neighbor_adjacent
+                
+                if neighbor_adjacent:
+                    volumeIndex[i] = volumeIndexDAQ[indexInDAQ]
+                    self.Z[i] = ZDAQ[indexInDAQ]
+                    self.volumeDirection[i] = (volumeDirectionDAQ[indexInDAQ]+1)//2
                 
         # Interpolate missing values for Z and volumeDirection
         # If there are gaps in frameCount (dropped frames) inside the volumes,  
@@ -518,14 +585,14 @@ class recording:
             volumeIndex[1:] = np.cumsum(np.absolute(np.diff(self.volumeDirection)))
             volumeIndex[0] = volumeIndex[1]
 
-        self.volumeIndex = volumeIndex
+        self.volumeIndex = (volumeIndex-volumeIndex[0]).astype(int)
             
         # Get the first frame of each volume as indexes in the list of frames 
         # that have been saved, regardless of dropped frames, so that you can
         # use these directly to load the files. frameTime, the absolute 
         # frameCount, and volumeIndex (not volumeIndexDAQ) can be indexed using
         # self.volumeFirstFrame.
-        self.volumeFirstFrame = np.where(np.diff(volumeIndex)==1)[0]+1
+        self.volumeFirstFrame = np.where(np.diff(volumeIndex)==1)[0]#+1
         self.nVolume = len(self.volumeFirstFrame)-2
         a, b = np.unique(np.diff(self.volumeFirstFrame), return_counts=True)
         self.Dt = round(a[np.argmax(b)],3)*self.dt
@@ -640,25 +707,34 @@ class recording:
                 for i in np.arange(self.optogeneticsN):
                     line = Line[i]
                     sline = line.split("\t")
-                    self.optogeneticsFrameCount[i] = int(sline[0])
-                    self.optogeneticsNPulses[i] = int(sline[1])
-                    self.optogeneticsRepRateDivider[i] = int(sline[2])
-                    self.optogeneticsNTrains[i] = int(sline[3])
-                    self.optogeneticsTimeBtwTrains[i] = float(sline[4])
-                    self.optogeneticsTargetX[i] = float(sline[5])
-                    self.optogeneticsTargetY[i] = float(sline[6])
-                    self.optogeneticsTargetZ[i] = float(sline[7])
-                    self.optogeneticsTargetXYSpace[i] = sline[8]
-                    self.optogeneticsTargetZSpace[i] = sline[9]
-                    self.optogeneticsTargetZDevice[i] = sline[10]
-                    self.optogeneticsTime[i] = sline[11]
-                    
-                    
-                    if self.optogeneticsTargetZSpace[i] == "etl0 space" and self.optogeneticsTargetZDevice[i] == "tunable lens":
-                        # If the device is the etl0 tunable lens, convert z to the corresponding voltage output by the DAQ card
-                        self.optogeneticsTargetZ[i] += (self.etlCalibrationMaxdpt-self.etlCalibrationMindpt)/2.0
-                        self.optogeneticsTargetZ[i] *=  self.framePixelPerUm/self.etlDptOverUm
+                    if int(sline[0]) <= self.frameCount[-1]:
+                        self.optogeneticsFrameCount[i] = int(sline[0])
+                        self.optogeneticsNPulses[i] = int(sline[1])
+                        self.optogeneticsRepRateDivider[i] = int(sline[2])
+                        self.optogeneticsNTrains[i] = int(sline[3])
+                        self.optogeneticsTimeBtwTrains[i] = float(sline[4])
+                        self.optogeneticsTargetX[i] = float(sline[5])
+                        self.optogeneticsTargetY[i] = float(sline[6])
+                        self.optogeneticsTargetZ[i] = float(sline[7])
+                        self.optogeneticsTargetXYSpace[i] = sline[8]
+                        self.optogeneticsTargetZSpace[i] = sline[9]
+                        self.optogeneticsTargetZDevice[i] = sline[10]
+                        self.optogeneticsTime[i] = sline[11]
+                        
+                        
+                        if self.optogeneticsTargetZSpace[i] == "etl0 space" and self.optogeneticsTargetZDevice[i] == "tunable lens":
+                            # If the device is the etl0 tunable lens, convert z to the corresponding voltage output by the DAQ card
+                            self.optogeneticsTargetZ[i] += (self.etlCalibrationMaxdpt-self.etlCalibrationMindpt)/2.0
+                            self.optogeneticsTargetZ[i] *=  self.framePixelPerUm/self.etlDptOverUm
         
+            # Load the "Pharos on" column from other_frameSynchronous to extract the exact timings of the triggers
+            frame_sync = np.loadtxt(self.foldername+self.filenameOtherFrameSynchronous,skiprows=1).T
+            pharos_on = frame_sync[6]
+            frame_count_sync = frame_sync[0]
+            trigger_frame_count = frame_count_sync[np.where(np.diff(pharos_on)==1)[0]] + 1
+            
+            for i in np.arange(self.optogeneticsN):
+                self.optogeneticsFrameCount[i] = trigger_frame_count[np.argmin(np.absolute(trigger_frame_count-self.optogeneticsFrameCount[i]))]
         else:
             self.optogeneticsType = "None"
             
@@ -684,8 +760,6 @@ class recording:
         #lastFrame = FramesIdx[-1]
         firstFrame = self.volumeFirstFrame[i]
         lastFrame = self.volumeFirstFrame[i+1]
-        print(firstFrame,lastFrame)
-        #print(firstFrame,lastFrame)
         volumeZ = np.zeros(lastFrame-firstFrame)
         
         if firstFrame in self.frameBufferIndexes:
@@ -733,11 +807,12 @@ class recording:
         # has been dropped.
         index = np.zeros(I,dtype=np.int32)
         for i in np.arange(I):
-            d = np.absolute(self.optogeneticsFrameCount[i]+shift-self.frameCount)
+            d = np.absolute(self.frameCount-(self.optogeneticsFrameCount[i]+shift))
             index[i] = np.argmin(d)
             
         if self.rectype == "3d":
-            index = self.volumeIndex[index]-shift_vol
+            index = self.volumeIndex[index]
+            index -= shift_vol
             
         ampl_indices = np.zeros(len(index)+2)
         ampl_indices[1:-1] = index
@@ -768,9 +843,13 @@ class recording:
         
         return events
         
+    def get_vol(self,i):
+        vol = self.load(startVolume=i, nVolume=1, standalone=True)
+            
+        return vol
+    
     
     ## SOME FUNCTIONS FOR FUTURE IMPLEMENTATION
-    
     
     def load_frames_onebyone(self, startFrame=0, stopFrame=-1):
         '''
@@ -795,7 +874,7 @@ class recording:
         self.frameLastLoaded = startFrame + i
                 
                         
-    def load_frame(self, k,i):
+    def load_frame(self, k, i):
         '''
         Loads next frame from current position in the opened file and stores it
         at the i-th index in the self.frames buffer. Returns True if it
