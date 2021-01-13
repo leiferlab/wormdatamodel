@@ -10,6 +10,8 @@ from copy import deepcopy as deepcopy
 from datetime import datetime
 import mistofrutta.struct.irrarray as irrarray
 import wormdatamodel as wormdm
+import savitzkygolay as sg
+from sklearn.decomposition import FastICA
 
 class Signal:
     '''Class representing signal extracted from recording. It supports irregular
@@ -41,7 +43,8 @@ class Signal:
                  strides = [], stride_names = [], stride_skip = [[0]], 
                  preprocess = None, nan_interp = True, 
                  smooth = False, smooth_n=4, 
-                 photobl_calc = False, photobl_appl = False):
+                 photobl_calc = False, photobl_appl = False,
+                 corr_inst_photobl = False):
         '''Constructor for the class. 
         
         Parameters
@@ -60,7 +63,24 @@ class Signal:
         stride_skip: list of integers (optional)
             Number of strides to skip at the beginning. Default: empty.
         preprocess: bool
-            Apply the all the preprocessing to the signal. Default: False.        
+            Apply the all the preprocessing to the signal. It does not control 
+            the correction of instantaneous photobleaching. Default: False.     
+        nan_interp: bool.
+            Interpolate nans. Default: True.
+        smooth: bool
+            Smooth with a box of size smooth_n. Default: False.
+        smooth_n: int
+            Size of the smoothing box. Default: 4.
+        photobl_calc: bool
+            Calculate the photobleaching correction. Set this to True instead of
+            photobl_appl if you are using the photobleaching correction for one
+            of the ratiometric methods. Default: False.
+        photobl_appl: bool
+            Apply the photobleaching correction. If True, the photobleaching 
+            correction will be calculated. Default: False.
+        corr_inst_photobl: bool
+            Detect and correct instantaneous photobleaching. Use only for the
+            red signal. Default: False.
         '''
 
         self.data = data;
@@ -87,6 +107,7 @@ class Signal:
         if photobl_appl: photobl_calc = True
         
         if nan_interp: self.data = self.interpolate_nans();
+        if corr_inst_photobl: self.corr_inst_photobl();
         if photobl_calc: self.calc_photobl()
         if photobl_appl: self.appl_photobl()
         if smooth: self.data = self.smooth(smooth_n);
@@ -201,7 +222,7 @@ class Signal:
         # pickles, do not preprocess.
         if uncorr_signal_ext == "txt":
             uncorr_signal = cls.from_file(folder, uncorr_signal_fname, nan_interp=True, smooth=False, photobl_calc=True, photobl_appl=False, strides = [], stride_names = [], stride_skip = [])
-            reference = cls.from_file(folder, reference_fname, nan_interp=True, smooth=False, photobl_calc=True, photobl_appl=False, strides = [], stride_names = [], stride_skip = [])
+            reference = cls.from_file(folder, reference_fname, nan_interp=True, smooth=False, photobl_calc=True, photobl_appl=False, corr_inst_photobl=True, strides = [], stride_names = [], stride_skip = [])
             
             # Save the preprocessed files.
             uncorr_signal.to_file(folder,".".join([uncorr_signal_fname.split(".")[0],"pickle"]) )
@@ -212,10 +233,12 @@ class Signal:
             reference = cls.from_file(folder, reference_fname, preprocess=False)
             if os.path.isfile(folder+cls.filename):
                 signal = cls.from_file(folder,cls.filename)
-                if signal.info["correction_method"] == method: return signal
+                if signal.info["correction_method"] == method: 
+                    print("Using pickled signal.")
+                    return signal
         
         # Merge the infos from the source Signal objects
-        info = reference.info
+        info = reference.info.copy()
         info["uncorr_signal"] = uncorr_signal.info
         info["reference"] = reference.info 
         info["correction_method"] = method
@@ -223,12 +246,18 @@ class Signal:
         # Compute the corrected signal based on one of the methods available.
         signal_d = np.zeros_like(reference.data)
         if method == 0.0:
+            # Standard ratiometric
             X = np.arange(uncorr_signal.data.shape[0])
             for k in np.arange(uncorr_signal.data.shape[1]):
                 unc_sig_pb = uncorr_signal._double_exp(X,uncorr_signal.photobl_p[k])
                 ref_pb = reference._double_exp(X,reference.photobl_p[k])
-                signal_d[:,k] = (uncorr_signal.data[:,k])/(reference.data[:,k])*(ref_pb*reference.maxY[k])/(unc_sig_pb*uncorr_signal.maxY[k])
+                #signal_d[:,k] = (uncorr_signal.data[:,k])/(reference.data[:,k])*(ref_pb*reference.maxY[k])/(unc_sig_pb*uncorr_signal.maxY[k])
+                # Removing the normalizations, I want it to have the same 
+                # amplitude as the raw GCaMP fluorescence, so that it's kind of 
+                # not cell-specific.
+                signal_d[:,k] = (uncorr_signal.data[:,k])/(reference.data[:,k])*(ref_pb*reference.maxY[k])/(unc_sig_pb)
         elif method==1.5:
+            # Derivative-based, version 1.5
             X = np.arange(uncorr_signal.data.shape[0])
             for k in np.arange(uncorr_signal.data.shape[1]):
                 P = reference.photobl_p
@@ -240,6 +269,7 @@ class Signal:
                 for i in np.arange(uncorr_signal.data.shape[0]-1):
                     signal_d[i+1,k] = signal_d[i,k]*oneplusd[i]
         elif method == 1.6:
+            # Derivative-based, verions 1.6
             X = np.arange(uncorr_signal.data.shape[0])
             for k in np.arange(uncorr_signal.data.shape[1]):
                 P = reference.photobl_p
@@ -251,6 +281,18 @@ class Signal:
                 signal_d[0,k] = uncorr_signal[0,k]+100
                 for i in np.arange(uncorr_signal.data.shape[0]-1):
                     signal_d[i+1,k] = signal_d[i,k]*oneplusd[i]
+        elif method == 2.0:
+            # ICA
+            X = np.arange(uncorr_signal.data.shape[0])
+            rlocstd = reference.get_loc_std(8)
+            unclocstd = uncorr_signal.get_loc_std()
+            trasformer = FastICA(n_components=2, random_state=0)
+            for k in np.arange(uncorr_signal.data.shape[1]):
+                unc_sig_pb = uncorr_signal._double_exp(X,uncorr_signal.photobl_p[k])
+                ref_pb = reference._double_exp(X,reference.photobl_p[k])
+                mixed = np.array([uncorr_signal.data[:,k]/unc_sig_pb/unclocstd[k],reference.data[:,k]/ref_pb/rlocstd[k]]).T
+                signal_d[:,k] = mixed[:,0]
+        
         
         if method == 1.6: photobl_calc = photobl_appl = True
         else: photobl_calc = photobl_appl = False
@@ -385,6 +427,15 @@ class Signal:
                 self.log("Problems with trace "+str(k)+": "+str(e))
 
     def appl_photobl(self, j=None):
+        '''Apply the precomputed photobleaching correction.
+        
+        Parameters
+        ----------
+        j: int (optional)
+            Neuron to which to apply the correction. If None, the correction 
+            will be applied to all the neurons. Default: None.
+        ''' 
+        
         self.log("Applying the photobleaching correction.",True)
         X = np.arange(self.data.shape[0])
         if j is None:
@@ -399,6 +450,68 @@ class Signal:
             self.data[:,k] /= (1.+data_photobleach_fit)
             
     #def get_photobl_fit(self, X, k=None):
+    
+    def corr_inst_photobl(self, j=None, poly_width=111, photobl_duration=3, min_distance=30):
+
+        if j is None:
+            iterate_over = np.arange(self.data.shape[1])
+        else:
+            try: len(j)
+            except: j = [j]
+            iterate_over = j
+            
+        # Calculate derivative (and diff, will be useful later)
+        deriv = np.zeros((self.data.shape[0],len(iterate_over)))
+        diff = np.zeros((self.data.shape[0],len(iterate_over)))
+        derker = -sg.get_1D_filter(poly_width,3,1)        
+        for i in np.arange(len(iterate_over)):
+            k = iterate_over[i]
+            deriv[:,i] = np.convolve(derker,self.data[:,k],mode="same")
+            diff[:-1,i] = np.diff(self.data[:,k])
+            
+        # Find where the derivative departs from normal behavior    
+        medderiv = np.median(deriv[poly_width:-poly_width],axis=0)
+        stdderiv = np.std(deriv[poly_width:-poly_width],axis=0)
+        
+        for i in np.arange(len(iterate_over)):
+            k = iterate_over[i]
+            i_pb = np.where(deriv[poly_width:-poly_width,i]<medderiv[i]-3*stdderiv[i])[0]+poly_width
+            
+            prev_jump_pos = -100*min_distance
+            if len(i_pb)>0:
+                # Find contiguous regions where the derivative is too negative
+                splt = np.where(np.diff(i_pb)>1)[0]+1
+                splt = np.append(0,splt)
+                splt = np.append(splt,-1)
+                for q in np.arange(len(splt)-1):
+                    # Find the "real" center of the jump 
+                    idx0 = i_pb[splt[q]]
+                    idx1 = i_pb[splt[q+1]]
+                    if idx1>(idx0+1):
+                        #jump_pos_poly = np.argmin(deriv[idx0:idx1,i])+idx0
+                        jump_pos = np.argmin(diff[idx0:idx1,i])+idx0
+                    else:
+                        jump_pos = idx0
+                    
+                    # Sometimes a region that should be contiguous is split.
+                    # If two detected jumps are too close they are likely
+                    # originating from this situation, so don't double count
+                    # them.
+                    if jump_pos<(prev_jump_pos+min_distance): continue
+                    prev_jump_pos = jump_pos
+                    
+                    # Calculate the amplitude of the jump
+                    jump = np.sum(deriv[jump_pos-poly_width//2:jump_pos+poly_width//2,i])
+                    
+                    # Calculate the factor by which the post-jump data needs to 
+                    # be multiplied to be corrected
+                    # Pre-jump value: could be something more fancy since you're
+                    # doing polynomial interpolation
+                    pre = np.median(self.data[jump_pos-10:jump_pos,k])
+                    mult = pre/(pre+jump)
+                    
+                    self.data[jump_pos+photobl_duration:,k] *= mult
+                
         
     
     ##### Additional Capabilities #####
