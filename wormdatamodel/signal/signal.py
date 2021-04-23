@@ -192,6 +192,8 @@ class Signal:
     @classmethod
     def from_signal_and_reference(cls, folder, uncorr_signal_fname, reference_fname, method=0.0, strides = [], stride_names = [], stride_skip = []):
         
+        if folder[-1]!="/": folder+="/"
+        
         # If the filename does not have any extension assign one. If both pickle
         # file exist, then load the pickles if the pickle file is newer than
         # the txt, otherwise load the raw txt.
@@ -361,21 +363,36 @@ class Signal:
         
         return interpolated
     
-    def smooth(self, n):
+    def smooth(self, n, i=None, poly=1, mode="rectangular"):
         '''Smooth the signal with a rectangular filter.
         
         Parameters
         ----------
         n: int
-            Width of the rectangular filter.        
+            Size of the filter.
+        i: int (optional)
+            Index of the neuron to be smoothed. If None, all the neurons
+            are smoothed. Default: None.
+        mode: string (optional)
+            Smoothing mode. rectangular, sg. Default: rectangular.
+        poly: int (optional)
+            Polynomial order for the Savitzky Golay filter. Required if mode is
+            sg.
         '''
-        self.log("Smoothing signal with a window of "+str(n)+" points.",False)
-        
-        sm = np.ones(n)/n
-        smoothed = np.copy(self.data)    
-        
-        for i in np.arange(self.data.shape[1]):
-            smoothed[:,i] = np.convolve(self.data[:,i],sm,mode="same")
+        if mode == "rectangular":
+            self.log("Smoothing signal with a window of "+str(n)+" points.",False)
+            sm = np.ones(n)/n
+        if mode == "sg":
+            self.log("Smoothing signal with a sg filter of size "+str(n)+" and.\
+                     order "+str(poly)+".",False)
+            sm = sg.get_1D_filter(n,poly,0)
+            
+        if i is None:
+            smoothed = np.copy(self.data)
+            for i in np.arange(self.data.shape[1]):
+                smoothed[:,i] = np.convolve(self.data[:,i],sm,mode="same")
+        else:
+            smoothed = np.convolve(self.data[:,i],sm,mode="same")
         
         return smoothed
         
@@ -391,10 +408,10 @@ class Signal:
         e = np.sum(np.power(f(X,P)-Y,2))
         return e
             
-    def calc_photobl(self, j=None):
+    def calc_photobl(self, j=None, verbose=True):
         data_corr = np.copy(self.data)
         X = np.arange(self.data.shape[0])
-        self.log("Calculating photobleaching correction, but not applying it.",True)
+        self.log("Calculating photobleaching correction, but not applying it.",verbose)
         
         if j is None:
             iterate_over = np.arange(self.data.shape[1])
@@ -426,7 +443,7 @@ class Signal:
             except Exception as e:
                 self.log("Problems with trace "+str(k)+": "+str(e))
 
-    def appl_photobl(self, j=None):
+    def appl_photobl(self, j=None, verbose=True):
         '''Apply the precomputed photobleaching correction.
         
         Parameters
@@ -436,7 +453,7 @@ class Signal:
             will be applied to all the neurons. Default: None.
         ''' 
         
-        self.log("Applying the photobleaching correction.",True)
+        self.log("Applying the photobleaching correction.",verbose)
         X = np.arange(self.data.shape[0])
         if j is None:
             iterate_over = np.arange(self.data.shape[1])
@@ -448,6 +465,7 @@ class Signal:
         for k in iterate_over:
             data_photobleach_fit = self._double_exp(X,self.photobl_p[k])*self.maxY[k]
             self.data[:,k] /= (1.+data_photobleach_fit)
+            self.data[:,k] *= self.maxY[k]
             
     #def get_photobl_fit(self, X, k=None):
     

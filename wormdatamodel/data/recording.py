@@ -726,15 +726,18 @@ class recording:
                             # If the device is the etl0 tunable lens, convert z to the corresponding voltage output by the DAQ card
                             self.optogeneticsTargetZ[i] += (self.etlCalibrationMaxdpt-self.etlCalibrationMindpt)/2.0
                             self.optogeneticsTargetZ[i] *=  self.framePixelPerUm/self.etlDptOverUm
-        
-            # Load the "Pharos on" column from other_frameSynchronous to extract the exact timings of the triggers
-            frame_sync = np.loadtxt(self.foldername+self.filenameOtherFrameSynchronous,skiprows=1).T
-            pharos_on = frame_sync[6]
-            frame_count_sync = frame_sync[0]
-            trigger_frame_count = frame_count_sync[np.where(np.diff(pharos_on)==1)[0]] + 1
             
-            for i in np.arange(self.optogeneticsN):
-                self.optogeneticsFrameCount[i] = trigger_frame_count[np.argmin(np.absolute(trigger_frame_count-self.optogeneticsFrameCount[i]))]
+            # Load the "Pharos on" column from other_frameSynchronous to extract the exact timings of the triggers
+            # Skip this step for 2D measurements, for which this file does not
+            # exist
+            if os.path.isfile(self.foldername+self.filenameOtherFrameSynchronous):
+                frame_sync = np.loadtxt(self.foldername+self.filenameOtherFrameSynchronous,skiprows=1).T
+                pharos_on = frame_sync[6]
+                frame_count_sync = frame_sync[0]
+                trigger_frame_count = frame_count_sync[np.where(np.diff(pharos_on)==1)[0]] + 1
+                
+                for i in np.arange(self.optogeneticsN):
+                    self.optogeneticsFrameCount[i] = trigger_frame_count[np.argmin(np.absolute(trigger_frame_count-self.optogeneticsFrameCount[i]))]
         else:
             self.optogeneticsType = "None"
             
@@ -817,7 +820,7 @@ class recording:
         ampl_indices = np.zeros(len(index)+2)
         ampl_indices[1:-1] = index
         ampl_indices[-1] = self.nVolume
-        strides = np.diff(ampl_indices)
+        strides = np.diff(ampl_indices).astype(int)
             
         properties = {
             'type': 'twophoton',
