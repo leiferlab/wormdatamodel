@@ -6,6 +6,9 @@ import warnings
 import os
 import pickle
 from scipy.optimize import minimize
+from scipy.ndimage import median_filter
+from scipy.special import comb
+from scipy.signal import savgol_coeffs
 from copy import deepcopy as deepcopy
 from datetime import datetime
 import mistofrutta.struct.irrarray as irrarray
@@ -34,6 +37,8 @@ class Signal:
     photobl_p = np.empty((0,0))
     photobl_n_params = 5
     
+    loc_std_cached = None
+    
     logbook = ""
     
     description = "_created from data_"
@@ -41,8 +46,9 @@ class Signal:
     
     def __init__(self, data, info, description = None, 
                  strides = [], stride_names = [], stride_skip = [[0]], 
-                 preprocess = None, nan_interp = True, 
-                 smooth = False, smooth_n=4, 
+                 preprocess = None, nan_interp = True, inf_remove = True,
+                 smooth = False, smooth_n=3, smooth_mode="rectangular", 
+                 smooth_poly=1, remove_spikes = False,
                  photobl_calc = False, photobl_appl = False,
                  corr_inst_photobl = False):
         '''Constructor for the class. 
@@ -69,8 +75,12 @@ class Signal:
             Interpolate nans. Default: True.
         smooth: bool
             Smooth with a box of size smooth_n. Default: False.
-        smooth_n: int
-            Size of the smoothing box. Default: 4.
+        smooth_n: int (optional)
+            Size of the smoothing box. Default: 3.
+        smooth_mode: str (optional)
+            Type of smoothing (rectangular or sg). Default: rectangular.    
+        smooth_poly: int (optional)
+            Polynomial order of the Savitzky-Golay smoothing. Default: 1.
         photobl_calc: bool
             Calculate the photobleaching correction. Set this to True instead of
             photobl_appl if you are using the photobleaching correction for one
@@ -96,22 +106,37 @@ class Signal:
         if preprocess is not None:
             if preprocess:
                 nan_interp = True
+                inf_remove = True
                 smooth = True
+                remove_spikes = True
                 photobl_calc = True
                 photobl_appl = True
             elif not preprocess:
                 nan_interp = False
+                inf_remove = False
                 smooth = False
+                remove_spikes = False
                 photobl_calc = False
                 photobl_appl = False
         if photobl_appl: photobl_calc = True
         
-        if nan_interp: self.data = self.interpolate_nans();
-        if corr_inst_photobl: self.corr_inst_photobl();
+        # Preprocessing flags
+        self.nan_interpolated = False
+        self.inf_removed = False
+        self.inst_photobl_corrected = False
+        self.photobl_calculated = False
+        self.photobl_applied = False
+        self.spikes_removed = False
+        self.smoothed = False
+        
+        if nan_interp: self.interpolate_nans()
+        if inf_remove: self.remove_infs()
+        if corr_inst_photobl: self.corr_inst_photobl()
         if photobl_calc: self.calc_photobl()
         if photobl_appl: self.appl_photobl()
-        if smooth: self.data = self.smooth(smooth_n);
-            
+        if remove_spikes: self.remove_spikes()
+        if smooth: self.smooth(smooth_n,None,smooth_poly,smooth_mode)
+        if inf_remove: self.remove_infs() # Yes, again
         
         # strides option allows you to construct an irregular array
         self.which_skip = dict(zip(stride_names,stride_skip))
@@ -132,7 +157,8 @@ class Signal:
             
             mask_uncut = np.copy(self.nan_mask)
             self.nan_mask = irrarray(mask_uncut, strides, strideNames=stride_names)
-    
+        
+        self.derivative = self.get_derivative(self.data,smooth_n,smooth_poly)
     
     @classmethod
     def from_file(cls,folder,filename,*args,**kwargs):
@@ -190,8 +216,11 @@ class Signal:
                 quit()
                 
     @classmethod
-    def from_signal_and_reference(cls, folder, uncorr_signal_fname, reference_fname, method=0.0, strides = [], stride_names = [], stride_skip = []):
-        
+    def from_signal_and_reference(
+            cls, folder, uncorr_signal_fname="green", reference_fname="red", 
+            method=0.0, strides = [], stride_names = [], stride_skip = [], 
+            **kwargs):
+            
         if folder[-1]!="/": folder+="/"
         
         # If the filename does not have any extension assign one. If both pickle
@@ -223,16 +252,26 @@ class Signal:
         # If loading from the raw txt files, preprocess. If loading from the 
         # pickles, do not preprocess.
         if uncorr_signal_ext == "txt":
-            uncorr_signal = cls.from_file(folder, uncorr_signal_fname, nan_interp=True, smooth=False, photobl_calc=True, photobl_appl=False, strides = [], stride_names = [], stride_skip = [])
-            reference = cls.from_file(folder, reference_fname, nan_interp=True, smooth=False, photobl_calc=True, photobl_appl=False, corr_inst_photobl=True, strides = [], stride_names = [], stride_skip = [])
+            uncorr_signal = cls.from_file(
+                             folder, uncorr_signal_fname, 
+                             nan_interp=True,remove_spikes=False,smooth=False, 
+                             photobl_calc=True, photobl_appl=False, 
+                             strides=[], stride_names=[], stride_skip=[])
+            reference = cls.from_file(
+                             folder, reference_fname, 
+                             nan_interp=True,remove_spikes=False,smooth=False, 
+                             photobl_calc=True,photobl_appl=False, 
+                             corr_inst_photobl=False, 
+                             strides = [], stride_names = [], stride_skip = [])
             
             # Save the preprocessed files.
             uncorr_signal.to_file(folder,".".join([uncorr_signal_fname.split(".")[0],"pickle"]) )
             reference.to_file(folder,".".join([reference_fname.split(".")[0],"pickle"]))
             
         elif uncorr_signal_ext == "pickle":
-            uncorr_signal = cls.from_file(folder, uncorr_signal_fname, preprocess=False)
-            reference = cls.from_file(folder, reference_fname, preprocess=False)
+            uncorr_signal = cls.from_file(folder, 
+                                          uncorr_signal_fname,preprocess=False)
+            reference = cls.from_file(folder, reference_fname,preprocess=False)
             if os.path.isfile(folder+cls.filename):
                 signal = cls.from_file(folder,cls.filename)
                 if signal.info["correction_method"] == method: 
@@ -294,6 +333,9 @@ class Signal:
                 ref_pb = reference._double_exp(X,reference.photobl_p[k])
                 mixed = np.array([uncorr_signal.data[:,k]/unc_sig_pb/unclocstd[k],reference.data[:,k]/ref_pb/rlocstd[k]]).T
                 signal_d[:,k] = mixed[:,0]
+        elif method == 2.1:
+            # Linear subtraction
+            pass
         
         
         if method == 1.6: photobl_calc = photobl_appl = True
@@ -301,7 +343,10 @@ class Signal:
         #photobl_calc = photobl_appl = False
         
         # Create the Signal object with the corrected signal.
-        signal = cls(signal_d, info, description="signal", strides=strides, stride_names=stride_names, stride_skip=stride_skip, photobl_calc=photobl_calc, photobl_appl=photobl_appl)
+        signal = cls(signal_d, info, description="signal", strides=strides, 
+                     stride_names=stride_names, stride_skip=stride_skip, 
+                     photobl_calc=photobl_calc, photobl_appl=photobl_appl,
+                     **kwargs)
             
         # Transfer logbooks from the original Signal objects
         signal.logbook += "Uncorrected signal log:\n"+"\t"+"\n\t".join(uncorr_signal.logbook.split("\n"))[:-2]+"\n"
@@ -360,10 +405,24 @@ class Signal:
                 interpolated[nans,i] = np.interp(x(nans), x(~nans), self.data[~nans,i])
             except:
                 pass
+        self.nan_interpolated = True
+        self.data = interpolated
         
-        return interpolated
+    def remove_infs(self,i=None):
+        if i is not None: 
+            try: len(i); iterate_over=i
+            except: iterate_over = [i]
+        else: iterate_over = np.arange(self.data.shape[1])
+        
+        for j in iterate_over:
+            infs = np.where(np.isinf(self.data[:,j]))
+            for inf_ in infs:
+                self.data[inf_,j] = self.data[inf_-1,j]
+        
+    def smooth(self,*args,**kwargs):
+        self.data = self.get_smoothed(*args,**kwargs)
     
-    def smooth(self, n, i=None, poly=1, mode="rectangular"):
+    def get_smoothed(self, n, i=None, poly=1, mode="rectangular"):
         '''Smooth the signal with a rectangular filter.
         
         Parameters
@@ -382,19 +441,96 @@ class Signal:
         if mode == "rectangular":
             self.log("Smoothing signal with a window of "+str(n)+" points.",False)
             sm = np.ones(n)/n
-        if mode == "sg":
+            shift = None
+        elif mode == "sg":
             self.log("Smoothing signal with a sg filter of size "+str(n)+" and.\
                      order "+str(poly)+".",False)
-            sm = sg.get_1D_filter(n,poly,0)
+            #sm = sg.get_1D_filter(n,poly,0)
+            sm = savgol_coeffs(n,poly)
+            shift = None
+        elif mode == "sg_causal":
+            self.log("Smoothing signal with a causal sg filter of size "+\
+                     str(n)+" and order "+str(poly)+".",False)
+            #sm = self.get_causal_sg(n,poly)
+            sm = savgol_coeffs(n,poly,pos=n-1)
+            shift = (n-1)//2
             
         if i is None:
             smoothed = np.copy(self.data)
             for i in np.arange(self.data.shape[1]):
-                smoothed[:,i] = np.convolve(self.data[:,i],sm,mode="same")
+                if shift is not None:
+                    smoothed[shift:,i] = np.convolve(self.data[:,i],
+                                                      sm,mode="same")[:-shift]
+                else:
+                    smoothed[:,i] = np.convolve(self.data[:,i],sm,mode="same")
         else:
-            smoothed = np.convolve(self.data[:,i],sm,mode="same")
+            if shift is not None:
+                smoothed = np.copy(self.data[:,i])
+                smoothed[shift:] = np.convolve(self.data[:,i],
+                                                sm,mode="same")[:-shift]
+            else:
+                smoothed = np.convolve(self.data[:,i],sm,mode="same")
         
+        self.smoothed = True
         return smoothed
+        
+    def remove_spikes(self, i=None):
+        if "spikes_removed" not in dir(self): self.spikes_removed=False
+        if not self.spikes_removed:
+            if i is not None: 
+                try: len(i); iterate_over=i
+                except: iterate_over = [i]
+            else: iterate_over = np.arange(self.data.shape[1])
+            
+            for j in iterate_over:
+                tot_std = np.nanstd(self.data[:,j])
+                spikes = np.where(self.data[:,j]-np.average(self.data[:,j])>tot_std*5)[0]
+                for spike in spikes:
+                    self.data[spike,j] = self.data[spike-1,j]
+            self.spikes_removed = True
+            affected_neurons = "neuron "+str(i) if i is not None else "all neurons"
+            self.log("Removing spikes wrt global stdev on "+affected_neurons,False)
+        else:
+            print("Spikes have already been removed. Not doing it again.",
+                  "Start from the unprocessed data.")
+                  
+    def median_filter(self, i=None):
+        if i is not None: 
+            try: len(i); iterate_over=i
+            except: iterate_over = [i]
+        else: iterate_over = np.arange(self.data.shape[1])
+        
+        for j in iterate_over:
+            median_filter(self.data[:,j],3,output=self.data[:,j])
+        
+        affected_neurons = "neuron "+str(i) if i is not None else "all neurons"
+        self.log("Median filtering on "+affected_neurons,False)
+                  
+    def get_derivative(self,data,n,poly):
+        deriv = np.zeros_like(data)
+        derker = sg.get_1D_filter(n,poly,1)
+        #derker = savgol_coeffs(n,poly,deriv=1)
+        n_neurons = data.shape[1]
+        for j in np.arange(n_neurons):
+            deriv[:,j] = np.convolve(data[:,j],derker,mode="same")
+            #for tempo in np.arange(ratio.data.shape[0]):
+                #dr[tempo,j] = bdf(ratio.data[:,j],tempo,1)
+        return deriv
+            
+    def get_segment(self,i0,i1,delta,baseline=True,normalize="loc_std_restricted"):
+        out = self.data[i0:i1].copy()
+        baseline_s = np.average(out[:delta],axis=0)
+        loc_std_s = np.std(out[:delta],axis=0)
+        if baseline: out.data -= baseline_s
+        if normalize=="loc_std_restricted":out.data /= loc_std_s
+        
+        return out
+        
+    def get_segment_nan_mask(self,i0,i1):
+        return self.nan_mask[i0:i1,:]
+        
+    def get_segment_derivative(self,i0,i1):
+        return self.derivative[i0:i1,:]
         
     @staticmethod    
     def _double_exp(X,P):
@@ -617,13 +753,50 @@ class Signal:
         avg = np.mean(temp,axis = 0)
         return avg
         
-    def get_loc_std(self,window=8):
-        loc_std = np.zeros(self.data.shape[1])
-        for j in np.arange(self.data.shape[1]):
-            loc_std[j] = np.sqrt(np.median(np.var(self.rolling_window(self.data[:,j], window), axis=-1)))
+    def get_loc_std(self,data=None,window=8):
+        '''Calculate the local (rolling) standard deviation of data with the
+        specified window, along axis 0.
+        
+        Parameters
+        ----------
+        data: (NT, N) or (N,) array_like (optional)
+            If None, the data contained in the object is used. If data is
+            passed, the local standard deviation of that array is returned.
+            Default: None.
+        window: int (optional)
+            Size of the rolling window. Default: 8.
             
+        Returns
+        -------
+        loc_std: (N,) array_like or scalar
+            Local standard deviation. Output shape depends on data input.
+        '''
+        
+        # Check if the cached loc_std can be useful
+        if data is None and self.loc_std_cached is not None:
+            if self.loc_std_cached["window"]==window:
+                return self.loc_std_cached["loc_std"]
+        
+        if data is None: 
+            data = self.data
+            data_was_none = True
+        else: 
+            data = np.array(data)
+            data_was_none = False
+
+        if len(data.shape)>1:        
+            loc_std = np.zeros(data.shape[1])
+            for j in np.arange(data.shape[1]):
+                loc_std[j] = np.sqrt(np.median(np.var(self.rolling_window(data[:,j], window), axis=-1)))
+        else:
+            loc_std = np.sqrt(np.median(np.var(self.rolling_window(data, window), axis=-1)))
+                
+        
+        if data_was_none:
+            self.loc_std_cached = {"window":window,"loc_std":loc_std}
+        
         return loc_std
-    
+
     ##### Underbelly Functions #####
     
     def copy(self):
@@ -651,3 +824,26 @@ class Signal:
         shape = a.shape[:-1] + (a.shape[-1] - window + 1, window)
         strides = a.strides + (a.strides[-1],)
         return np.lib.stride_tricks.as_strided(a, shape=shape, strides=strides)
+    
+    @staticmethod
+    def get_causal_sg(n,poly):
+        order = np.arange(poly+1)
+        out = np.zeros(n)
+        for i in order:
+            fil = sg.get_1D_filter(n,poly,i)
+            if i%2==1: fil = fil[::-1]
+            out += fil*(((n-1)//2)**i)
+        return out
+        
+    @staticmethod
+    def get_holoborodko_filter(n,poly):
+        ker = np.zeros(n)
+        m = (n-1)//2
+        ks = np.arange(-m,m)
+        for k in ks:
+            ker[k+m] = (3*m-1-2*k**2)/(2*m-1)/(2**(2*m))*comb(2*m,m+k)
+        return ker
+        
+        #if n==11 and poly==5:
+        #    ker = np.array([-4,-20,-20,80,280,392,280,80,-20,-20,-4])/1024.
+        #    return ker
