@@ -102,24 +102,6 @@ class Signal:
         self.maxY = np.zeros(self.data.shape[1])
         self.photobl_p = np.zeros((self.data.shape[1],5))
         
-        self.smooth_n = smooth_n; # smoothing parameter
-        if preprocess is not None:
-            if preprocess:
-                nan_interp = True
-                inf_remove = True
-                smooth = True
-                remove_spikes = True
-                photobl_calc = True
-                photobl_appl = True
-            elif not preprocess:
-                nan_interp = False
-                inf_remove = False
-                smooth = False
-                remove_spikes = False
-                photobl_calc = False
-                photobl_appl = False
-        if photobl_appl: photobl_calc = True
-        
         # Preprocessing flags
         self.nan_interpolated = False
         self.inf_removed = False
@@ -129,14 +111,12 @@ class Signal:
         self.spikes_removed = False
         self.smoothed = False
         
-        if nan_interp: self.interpolate_nans()
-        if inf_remove: self.remove_infs()
-        if corr_inst_photobl: self.corr_inst_photobl()
-        if photobl_calc: self.calc_photobl()
-        if photobl_appl: self.appl_photobl()
-        if remove_spikes: self.remove_spikes()
-        if smooth: self.smooth(smooth_n,None,smooth_poly,smooth_mode)
-        if inf_remove: self.remove_infs() # Yes, again
+        self.apply_preprocessing(
+         preprocess=preprocess, nan_interp=nan_interp, inf_remove = inf_remove,
+         smooth = smooth, smooth_n=smooth_n, smooth_mode=smooth_mode, 
+         smooth_poly=smooth_poly, remove_spikes = remove_spikes,
+         photobl_calc = photobl_calc, photobl_appl = photobl_appl,
+         corr_inst_photobl = corr_inst_photobl)
         
         # strides option allows you to construct an irregular array
         self.which_skip = dict(zip(stride_names,stride_skip))
@@ -159,6 +139,41 @@ class Signal:
             self.nan_mask = irrarray(mask_uncut, strides, strideNames=stride_names)
         
         self.derivative = self.get_derivative(self.data,smooth_n,smooth_poly)
+        
+    def apply_preprocessing(
+                 self, preprocess = None, nan_interp = True, 
+                 inf_remove = True,
+                 smooth = False, smooth_n=3, smooth_mode="rectangular", 
+                 smooth_poly=1, remove_spikes = False,
+                 photobl_calc = False, photobl_appl = False,
+                 corr_inst_photobl = False):
+    
+        self.smooth_n = smooth_n; # smoothing parameter
+        if preprocess is not None:
+            if preprocess:
+                nan_interp = True
+                inf_remove = True
+                smooth = True
+                remove_spikes = True
+                photobl_calc = True
+                photobl_appl = True
+            elif not preprocess:
+                nan_interp = False
+                inf_remove = False
+                smooth = False
+                remove_spikes = False
+                photobl_calc = False
+                photobl_appl = False
+        if photobl_appl: photobl_calc = True
+                
+        if nan_interp and not self.nan_interpolated: self.interpolate_nans()
+        if inf_remove and not self.inf_removed: self.remove_infs()
+        if corr_inst_photobl and not self.inst_photobl_corrected: self.corr_inst_photobl()
+        if photobl_calc and not self.photobl_calculated: self.calc_photobl()
+        if photobl_appl and not self.photobl_applied: self.appl_photobl()
+        if remove_spikes and not self.spikes_removed: self.remove_spikes()
+        if smooth and not self.smoothed: self.smooth(smooth_n,None,smooth_poly,smooth_mode)
+        if inf_remove: self.remove_infs() # Yes, again
     
     @classmethod
     def from_file(cls,folder,filename,*args,**kwargs):
@@ -194,6 +209,7 @@ class Signal:
         elif filename.split(".")[-1] == "pickle":
             f = open(folder+filename,"rb")
             inst = pickle.load(f)
+            inst.apply_preprocessing(**kwargs)
             f.close()
             return inst
         else:
@@ -201,6 +217,7 @@ class Signal:
                 f = open(folder+filename+".pickle","rb")
                 inst = pickle.load(f)
                 f.close()
+                inst.apply_preprocessing(**kwargs)
                 return inst
             elif os.path.isfile(folder+filename+".txt"):
                 data, info = wormdm.signal.from_file(folder,filename)
@@ -273,7 +290,7 @@ class Signal:
                                           uncorr_signal_fname,preprocess=False)
             reference = cls.from_file(folder, reference_fname,preprocess=False)
             if os.path.isfile(folder+cls.filename):
-                signal = cls.from_file(folder,cls.filename)
+                signal = cls.from_file(folder,cls.filename,**kwargs)
                 if signal.info["correction_method"] == method: 
                     print("Using pickled signal.")
                     return signal
@@ -418,9 +435,12 @@ class Signal:
             infs = np.where(np.isinf(self.data[:,j]))
             for inf_ in infs:
                 self.data[inf_,j] = self.data[inf_-1,j]
+                
+        self.inf_removed = True
         
     def smooth(self,*args,**kwargs):
         self.data = self.get_smoothed(*args,**kwargs)
+        self.smoothed = True
     
     def get_smoothed(self, n, i=None, poly=1, mode="rectangular"):
         '''Smooth the signal with a rectangular filter.
@@ -480,6 +500,7 @@ class Signal:
             if i is not None: 
                 try: len(i); iterate_over=i
                 except: iterate_over = [i]
+                self.spikes_removed = True
             else: iterate_over = np.arange(self.data.shape[1])
             
             for j in iterate_over:
@@ -487,7 +508,6 @@ class Signal:
                 spikes = np.where(self.data[:,j]-np.average(self.data[:,j])>tot_std*5)[0]
                 for spike in spikes:
                     self.data[spike,j] = self.data[spike-1,j]
-            self.spikes_removed = True
             affected_neurons = "neuron "+str(i) if i is not None else "all neurons"
             self.log("Removing spikes wrt global stdev on "+affected_neurons,False)
         else:
@@ -517,12 +537,42 @@ class Signal:
                 #dr[tempo,j] = bdf(ratio.data[:,j],tempo,1)
         return deriv
             
-    def get_segment(self,i0,i1,delta,baseline=True,normalize="loc_std_restricted"):
+    def get_segment(self,i0,i1,delta=0,baseline=True,normalize="loc_std_restricted"):
+        '''Return a pre-processed segment of the data. If baseline is True, the
+        function calculates the average of the data in the first delta time
+        points and subtract this baseline from the data. If normalize is set 
+        to an implemented method, the data will be normalized accordingly.
+        
+        Parameters
+        ----------
+        i0: int
+            Starting index along the time axis.
+        i1: int
+            Ending index along the time axis.
+        delta: int (optional)
+            Number of time points to average to find the baseline. (Default: 0)
+        baseline: bool (optional)
+            Whether to subtract the baseline. (Default: True)
+        normalize: str (optional)
+            Normalization method. If it's \"loc_std_restricted\" the data is 
+            normalized by the standard deviation of the data from i0 to 
+            i0+delta. (Default: loc_std_restricted)
+        '''
         out = self.data[i0:i1].copy()
         baseline_s = np.average(out[:delta],axis=0)
-        loc_std_s = np.std(out[:delta],axis=0)
         if baseline: out.data -= baseline_s
-        if normalize=="loc_std_restricted":out.data /= loc_std_s
+        if normalize=="loc_std_restricted":
+            loc_std_s = np.nanstd(out[:delta],axis=0)
+            # Replace bad loc_std_s with 1, so that the normalization is skipped
+            # for those cases.
+            msk = (loc_std_s!=0)*(~np.isnan(loc_std_s))*(~np.isinf(loc_std_s))
+            loc_std_s[~msk] = 1.
+            out.data /= loc_std_s
+        if normalize=="max":
+            maxs = np.nanmax(np.abs(out[delta:]),axis=0)
+            msk = (maxs!=0)*(~np.isnan(maxs))*(~np.isinf(maxs))
+            maxs[~msk] = 1.
+            out.data /= maxs
         
         return out
         
@@ -551,6 +601,7 @@ class Signal:
         
         if j is None:
             iterate_over = np.arange(self.data.shape[1])
+            self.photobl_calculated = True
         else:
             try: len(j)
             except: j = [j]
@@ -593,6 +644,7 @@ class Signal:
         X = np.arange(self.data.shape[0])
         if j is None:
             iterate_over = np.arange(self.data.shape[1])
+            self.photobl_applied = True
         else:
             try: len(j)
             except: j = [j]
@@ -609,6 +661,7 @@ class Signal:
 
         if j is None:
             iterate_over = np.arange(self.data.shape[1])
+            self.inst_photobl_corrected = True
         else:
             try: len(j)
             except: j = [j]
