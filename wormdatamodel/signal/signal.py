@@ -138,7 +138,8 @@ class Signal:
             mask_uncut = np.copy(self.nan_mask)
             self.nan_mask = irrarray(mask_uncut, strides, strideNames=stride_names)
         
-        self.derivative = self.get_derivative(self.data,smooth_n,smooth_poly)
+        if smooth_n>3 and smooth_poly<5 and smooth_poly<(smooth_n-1):
+            self.derivative = self.get_derivative(self.data,smooth_n,smooth_poly)
         
     def apply_preprocessing(
                  self, preprocess = None, nan_interp = True, 
@@ -537,7 +538,10 @@ class Signal:
                 #dr[tempo,j] = bdf(ratio.data[:,j],tempo,1)
         return deriv
             
-    def get_segment(self,i0,i1,delta=0,baseline=True,normalize="loc_std_restricted"):
+    def get_segment(self,i0,i1,delta=0,
+                    baseline=True,baseline_range=None,
+                    normalize="loc_std_restricted",norm_range=None,
+                    norm_window=4):
         '''Return a pre-processed segment of the data. If baseline is True, the
         function calculates the average of the data in the first delta time
         points and subtract this baseline from the data. If normalize is set 
@@ -559,17 +563,41 @@ class Signal:
             i0+delta. (Default: loc_std_restricted)
         '''
         out = self.data[i0:i1].copy()
-        baseline_s = np.average(out[:delta],axis=0)
+        # Subtract baseline
+        if baseline_range is None: bi0, bi1 = None, delta
+        else:
+            bi0 = None if baseline_range[0] is None else baseline_range[0]
+            bi1 = delta if baseline_range[1] is None else baseline_range[1]
+        baseline_s = np.average(out[bi0:bi1],axis=0)
         if baseline: out.data -= baseline_s
-        if normalize=="loc_std_restricted":
-            loc_std_s = np.nanstd(out[:delta],axis=0)
+        
+        # Normalize
+        if normalize=="glob_std_restricted":
+            # Calculate the restricted global standard deviation
+            glob_std = np.nanstd(out[:delta],axis=0)
             # Replace bad loc_std_s with 1, so that the normalization is skipped
             # for those cases.
-            msk = (loc_std_s!=0)*(~np.isnan(loc_std_s))*(~np.isinf(loc_std_s))
-            loc_std_s[~msk] = 1.
-            out.data /= loc_std_s
-        if normalize=="max":
-            maxs = np.nanmax(np.abs(out[delta:]),axis=0)
+            msk = (glob_std!=0)*(~np.isnan(glob_std))*(~np.isinf(glob_std))
+            glob_std[~msk] = 1.
+            out.data /= glob_std
+            
+        elif normalize=="loc_std_restricted":
+            # Cacluate the restricted local standard deviation
+            loc_std = self.get_loc_std(out[:delta],norm_window)
+            # As for previous case
+            msk = (loc_std!=0)*(~np.isnan(loc_std))*(~np.isinf(loc_std))
+            loc_std[~msk] = 1.
+            out.data /= loc_std
+            
+        elif normalize in ["max","max_abs"]:
+            if norm_range is None: mi0, mi1 = delta, None
+            else:
+                mi0 = delta if norm_range[0] is None else norm_range[0]
+                mi1 = None if norm_range[1] is None else norm_range[1]
+            if normalize=="max_abs":
+                maxs = np.nanmax(np.abs(out[mi0:mi1]),axis=0)
+            else:
+                maxs = np.nanmax(out[mi0:mi1],axis=0)
             msk = (maxs!=0)*(~np.isnan(maxs))*(~np.isinf(maxs))
             maxs[~msk] = 1.
             out.data /= maxs
