@@ -568,7 +568,7 @@ class Signal:
         else:
             bi0 = None if baseline_range[0] is None else baseline_range[0]
             bi1 = delta if baseline_range[1] is None else baseline_range[1]
-        baseline_s = np.average(out[bi0:bi1],axis=0)
+        baseline_s = np.median(out[bi0:bi1],axis=0)
         if baseline: out.data -= baseline_s
         
         # Normalize
@@ -583,7 +583,7 @@ class Signal:
             
         elif normalize=="loc_std_restricted":
             # Cacluate the restricted local standard deviation
-            loc_std = self.get_loc_std(out[:delta],norm_window)
+            loc_std = self.get_loc_std(out,norm_window)
             # As for previous case
             msk = (loc_std!=0)*(~np.isnan(loc_std))*(~np.isinf(loc_std))
             loc_std[~msk] = 1.
