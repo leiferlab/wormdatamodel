@@ -111,6 +111,8 @@ class Signal:
         self.spikes_removed = False
         self.smoothed = False
         
+        self.spikes = np.zeros_like(data,dtype=bool)
+        
         self.apply_preprocessing(
          preprocess=preprocess, nan_interp=nan_interp, inf_remove = inf_remove,
          smooth = smooth, smooth_n=smooth_n, smooth_mode=smooth_mode, 
@@ -140,6 +142,8 @@ class Signal:
         
         if smooth_n>3 and smooth_poly<5 and smooth_poly<(smooth_n-1):
             self.derivative = self.get_derivative(self.data,smooth_n,smooth_poly)
+        else:
+            self.derivative = self.get_derivative(self.data,3,1)
         
     def apply_preprocessing(
                  self, preprocess = None, nan_interp = True, 
@@ -440,6 +444,7 @@ class Signal:
         self.inf_removed = True
         
     def smooth(self,*args,**kwargs):
+        self.unsmoothed_data = np.copy(self.data)
         self.data = self.get_smoothed(*args,**kwargs)
         self.smoothed = True
     
@@ -498,6 +503,10 @@ class Signal:
     def remove_spikes(self, i=None):
         if "spikes_removed" not in dir(self): self.spikes_removed=False
         if not self.spikes_removed:
+            # For back-compatibility with old objects
+            try: self.spikes
+            except: self.spikes = np.zeros_like(self.data,dtype=bool)
+                
             if i is not None: 
                 try: len(i); iterate_over=i
                 except: iterate_over = [i]
@@ -507,6 +516,7 @@ class Signal:
             for j in iterate_over:
                 tot_std = np.nanstd(self.data[:,j])
                 spikes = np.where(self.data[:,j]-np.average(self.data[:,j])>tot_std*5)[0]
+                self.spikes[:,j] = self.data[:,j]-np.average(self.data[:,j])>tot_std*5
                 for spike in spikes:
                     self.data[spike,j] = self.data[spike-1,j]
             affected_neurons = "neuron "+str(i) if i is not None else "all neurons"
@@ -541,7 +551,7 @@ class Signal:
     def get_segment(self,i0,i1,delta=0,
                     baseline=True,baseline_range=None,
                     normalize="loc_std_restricted",norm_range=None,
-                    norm_window=4):
+                    norm_window=4,unsmoothed_data=False):
         '''Return a pre-processed segment of the data. If baseline is True, the
         function calculates the average of the data in the first delta time
         points and subtract this baseline from the data. If normalize is set 
@@ -562,7 +572,11 @@ class Signal:
             normalized by the standard deviation of the data from i0 to 
             i0+delta. (Default: loc_std_restricted)
         '''
-        out = self.data[i0:i1].copy()
+        if unsmoothed_data and self.smoothed:
+            out = self.unsmoothed_data[i0:i1].copy()
+        else:
+            out = self.data[i0:i1].copy()
+        
         # Subtract baseline
         if baseline_range is None: bi0, bi1 = None, delta
         else:
@@ -852,6 +866,8 @@ class Signal:
         loc_std: (N,) array_like or scalar
             Local standard deviation. Output shape depends on data input.
         '''
+        
+        if len(data)==0: return 0.0
         
         # Check if the cached loc_std can be useful
         if data is None and self.loc_std_cached is not None:
