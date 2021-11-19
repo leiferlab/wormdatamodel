@@ -199,7 +199,15 @@ class Signal:
             Any other parameter to be passed to the constructor.
         '''
         
+        appl_preproc = False
+        from_pickle = False
+        nan_th = None
+        if "matchless_nan_th" in kwargs.keys():
+            nan_th = kwargs["matchless_nan_th"]
+            kwargs.pop("matchless_nan_th")
+        
         if filename.split(".")[-1] == "txt": 
+            fname_base = ".".join(filename.split(".")[:-1])
             # read in data; rows = time, columns = neuron
             data, info = wormdm.signal.from_file(folder,filename)
             # adjusting the shape so that even if only one neuron, still has "columns"
@@ -207,23 +215,28 @@ class Signal:
                 data.shape[1]
             except:
                 data = np.copy(np.reshape(data,(data.shape[0],1)))
-            
+                
             inst = cls(data,info,".".join(filename.split(".")[:-1]),*args,**kwargs)
-            return inst
+            #return inst
             
         elif filename.split(".")[-1] == "pickle":
+            fname_base = ".".join(filename.split(".")[:-1])
             f = open(folder+filename,"rb")
             inst = pickle.load(f)
-            inst.apply_preprocessing(**kwargs)
+            from_pickle = True
+            appl_preproc = True
             f.close()
-            return inst
+            #return inst
         else:
+            fname_base = filename
             if os.path.isfile(folder+filename+".pickle"):
                 f = open(folder+filename+".pickle","rb")
                 inst = pickle.load(f)
                 f.close()
-                inst.apply_preprocessing(**kwargs)
-                return inst
+                appl_preproc = True
+                from_pickle = True
+                #inst.apply_preprocessing(**kwargs)
+                #return inst
             elif os.path.isfile(folder+filename+".txt"):
                 data, info = wormdm.signal.from_file(folder,filename)
                 try:
@@ -232,10 +245,38 @@ class Signal:
                     data = np.copy(np.reshape(data,(data.shape[0],1)))
             
                 inst = cls(data,info,filename,*args,**kwargs)
-                return inst
+                #return inst
             else:
                 print(folder+filename+" is not present.")
                 quit()
+                
+        # Substitute data for neurons with too many nans with the matchless
+        # signal, if present.
+        
+        mtchlss_fname = fname_base+"_matchless.txt"
+        matchless_present=os.path.isfile(folder+mtchlss_fname)
+        if nan_th is not None and matchless_present:
+            too_many_nans=np.sum(inst.nan_mask,axis=0)>nan_th*inst.data.shape[0]
+            #print(np.where(too_many_nans))
+            
+            if np.any(too_many_nans):
+                print("Signal "+fname_base+": substituting some with matchless.")
+                mtchlss, _ = wormdm.signal.from_file(folder,mtchlss_fname)
+                inst.data[:,too_many_nans] = mtchlss[:,too_many_nans]
+                inst.nan_mask[:,too_many_nans] = np.isnan(inst.data[:,too_many_nans])
+                for i in np.where(too_many_nans)[0]:
+                    # nans: location of nans
+                    # x: function that finds the non-zero entries
+                    nans, x = inst.nan_mask[:,i], lambda z: z.nonzero()[0]
+                    try:
+                        inst.data[nans,i] = np.interp(x(nans), x(~nans), inst.data[~nans,i])
+                    except:
+                        pass
+                
+        if appl_preproc:
+            inst.apply_preprocessing(**kwargs)
+        
+        return inst
                 
     @classmethod
     def from_signal_and_reference(
