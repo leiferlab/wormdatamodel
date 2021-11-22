@@ -590,7 +590,7 @@ class Signal:
         return deriv
             
     def get_segment(self,i0,i1,delta=0,
-                    baseline=True,baseline_range=None,
+                    baseline=True,baseline_range=None,baseline_mode="constant",
                     normalize="loc_std_restricted",norm_range=None,
                     norm_window=4,unsmoothed_data=False):
         '''Return a pre-processed segment of the data. If baseline is True, the
@@ -624,7 +624,20 @@ class Signal:
             bi0 = None if baseline_range[0] is None else baseline_range[0]
             bi1 = delta if baseline_range[1] is None else baseline_range[1]
         baseline_s = np.median(out[bi0:bi1],axis=0)
-        if baseline: out.data -= baseline_s
+        if baseline and baseline_mode=="constant": 
+            out.data -= baseline_s
+        elif baseline and baseline_mode=="exp":
+            shift = np.min(out[bi0:bi1],axis=0)
+            exp_fit_y = out[bi0:bi1]-shift+1e-3
+            exp_fit_x = np.arange(len(exp_fit_y))
+            for i_neu in np.arange(out.shape[1]):
+                a,b = self.lst_sq_exp(exp_fit_x,exp_fit_y[:,i_neu])
+                if b>=0: 
+                    out[:,i_neu] -= baseline_s[i_neu]
+                else:
+                    exp_fit_x2 = np.arange(out.shape[0])
+                    out[:,i_neu] -= a*np.exp(b*exp_fit_x2)+shift[i_neu]-1e-3
+            
         
         # Normalize
         if normalize=="glob_std_restricted":
@@ -801,8 +814,25 @@ class Signal:
                     mult = pre/(pre+jump)
                     
                     self.data[jump_pos+photobl_duration:,k] *= mult
-                
+    
+    @staticmethod
+    def lst_sq_exp(x,y):
+        '''Returns the least-squares fit of an exponential A*exp(Bx)'''
         
+        sumy = np.sum(y)
+        sumx2y = np.sum((x**2)*y)
+        sumxy = np.sum(x*y)
+        sumxy2 = sumxy**2
+        lny = np.log(y)
+        sumylny = np.sum(y*lny)
+        sumxylny = np.sum(x*y*lny)
+         
+        den =  sumy * sumx2y - sumxy2
+        
+        a = (sumx2y*sumylny - sumxy*sumxylny)/den
+        b = (sumy*sumxylny - sumxy*sumylny)/den
+        
+        return np.exp(a), b
     
     ##### Additional Capabilities #####
     
