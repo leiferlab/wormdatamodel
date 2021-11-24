@@ -256,7 +256,7 @@ class Signal:
         mtchlss_fname = fname_base+"_matchless.txt"
         matchless_present=os.path.isfile(folder+mtchlss_fname)
         if nan_th is not None and matchless_present:
-            too_many_nans=np.sum(inst.nan_mask,axis=0)>nan_th*inst.data.shape[0]
+            too_many_nans=np.sum(inst.nan_mask,axis=0)>=nan_th*inst.data.shape[0]
             #print(np.where(too_many_nans))
             
             if np.any(too_many_nans):
