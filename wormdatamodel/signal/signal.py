@@ -1015,3 +1015,20 @@ class Signal:
         #if n==11 and poly==5:
         #    ker = np.array([-4,-20,-20,80,280,392,280,80,-20,-20,-4])/1024.
         #    return ker
+        
+    @staticmethod
+    def remove_outliers(y,std_th=2.):
+        y2 = y.copy()
+        dy = np.diff(y)
+        outls = np.where(dy>std_th*np.std(dy))[0]
+        
+        for outl in outls:
+            if outl<len(y)-1:
+                y2[outl] = 0.5*(y2[outl-1]+y2[outl+1])
+            else:
+                y2[outl] = y2[outl-1]
+                
+        return y2
+        
+        
+        

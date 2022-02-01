@@ -614,6 +614,9 @@ class recording:
             self.etlVOverDpt = (self.etlVMax-self.etlVMin) / (self.etlCalibrationMaxdpt-self.etlCalibrationMindpt)
         #except:
             #self.zUmOverV = 1./0.0625
+            
+        if "latencyShiftPermutation" in zDetails.keys():
+            self.latencyShiftPermutation = zDetails["latencyShiftPermutation"]
         
         # Build the list ZZ of Z split in different volumes
         self.ZZ = []
