@@ -44,6 +44,8 @@ class Signal:
     description = "_created from data_"
     filename = "signal.pickle"
     
+    matchless_nan_th_fname = "matchless_nan_th.txt"
+    
     def __init__(self, data, info, description = None, 
                  strides = [], stride_names = [], stride_skip = [[0]], 
                  preprocess = None, nan_interp = True, inf_remove = True,
@@ -202,8 +204,17 @@ class Signal:
         appl_preproc = False
         from_pickle = False
         nan_th = None
+        
+        if "matchless_nan_th_from_file" in kwargs.keys():
+            nan_th_ = cls.get_matchless_nan_th_from_file(folder)
+            if nan_th_ is not None:
+                nan_th = nan_th_
+                print("Signal: using matchless_nan_th_from_file=",nan_th)
+            kwargs.pop("matchless_nan_th_from_file")
+        
         if "matchless_nan_th" in kwargs.keys():
-            nan_th = kwargs["matchless_nan_th"]
+            if kwargs["matchless_nan_th"] is not None:
+                nan_th = kwargs["matchless_nan_th"]
             kwargs.pop("matchless_nan_th")
         
         if filename.split(".")[-1] == "txt": 
@@ -1029,6 +1040,19 @@ class Signal:
                 y2[outl] = y2[outl-1]
                 
         return y2
+    
+    @classmethod
+    def get_matchless_nan_th_from_file(cls,folder):
+        fname = folder+cls.matchless_nan_th_fname
         
+        if os.path.isfile(fname):
+            f = open(fname,"r")
+            l = f.readline()
+            if l[-1]=="\n": l=l[:-1]
+            mnt = float(l)
+        else:
+            mnt = None
+        
+        return mnt
         
         
