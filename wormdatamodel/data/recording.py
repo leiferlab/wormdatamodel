@@ -585,7 +585,8 @@ class recording:
             volumeIndex[1:] = np.cumsum(np.absolute(np.diff(self.volumeDirection)))
             volumeIndex[0] = volumeIndex[1]
 
-        self.volumeIndex = (volumeIndex-volumeIndex[0]).astype(int)
+        # Subtract 1 because volume 0 has to be the first complete volume.
+        self.volumeIndex = (volumeIndex-volumeIndex[0]).astype(int)-1
             
         # Get the first frame of each volume as indexes in the list of frames 
         # that have been saved, regardless of dropped frames, so that you can
