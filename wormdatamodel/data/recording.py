@@ -854,6 +854,9 @@ class recording:
         vol = self.load(startVolume=i, nVolume=1, standalone=True)
             
         return vol
+        
+    def red_to_green(self,zyx):
+        return wormdm.data.redToGreen(zyx,folder=self.folder)
     
     
     ## SOME FUNCTIONS FOR FUTURE IMPLEMENTATION

@@ -680,6 +680,9 @@ class Signal:
             msk = (maxs!=0)*(~np.isnan(maxs))*(~np.isinf(maxs))
             maxs[~msk] = 1.
             out.data /= maxs
+
+        elif normalize == "baseline":
+            out.data /= baseline_s
         
         return out
         
