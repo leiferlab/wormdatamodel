@@ -614,7 +614,7 @@ class recording:
             self.etlDptOverUm = zDetails["etl dpt/um"]
             self.etlVOverDpt = (self.etlVMax-self.etlVMin) / (self.etlCalibrationMaxdpt-self.etlCalibrationMindpt)
         #except:
-            #self.zUmOverV = 1./0.0625
+        #    self.zUmOverV = 1./0.0625
             
         if "latencyShiftPermutation" in zDetails.keys():
             self.latencyShiftPermutation = zDetails["latencyShiftPermutation"]

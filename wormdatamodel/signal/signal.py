@@ -109,6 +109,7 @@ class Signal:
         self.inf_removed = False
         self.inst_photobl_corrected = False
         self.photobl_calculated = False
+        self.photobl_newly_calculated = False
         self.photobl_applied = False
         self.spikes_removed = False
         self.smoothed = False
@@ -172,7 +173,7 @@ class Signal:
                 photobl_calc = False
                 photobl_appl = False
         if photobl_appl: photobl_calc = True
-                
+        
         if nan_interp and not self.nan_interpolated: self.interpolate_nans()
         if inf_remove and not self.inf_removed: self.remove_infs()
         if corr_inst_photobl and not self.inst_photobl_corrected: self.corr_inst_photobl()
@@ -566,11 +567,12 @@ class Signal:
             else: iterate_over = np.arange(self.data.shape[1])
             
             for j in iterate_over:
-                tot_std = np.nanstd(self.data[:,j])
-                spikes = np.where(self.data[:,j]-np.average(self.data[:,j])>tot_std*5)[0]
-                self.spikes[:,j] = self.data[:,j]-np.average(self.data[:,j])>tot_std*5
-                for spike in spikes:
-                    self.data[spike,j] = self.data[spike-1,j]
+                if np.all(~np.isnan(self.data[:,j])):
+                    tot_std = np.nanstd(self.data[:,j])
+                    spikes = np.where(self.data[:,j]-np.average(self.data[:,j])>tot_std*5)[0]
+                    self.spikes[:,j] = self.data[:,j]-np.average(self.data[:,j])>tot_std*5
+                    for spike in spikes:
+                        self.data[spike,j] = self.data[spike-1,j]
             affected_neurons = "neuron "+str(i) if i is not None else "all neurons"
             self.log("Removing spikes wrt global stdev on "+affected_neurons,False)
         else:
@@ -634,7 +636,16 @@ class Signal:
         else:
             bi0 = None if baseline_range[0] is None else baseline_range[0]
             bi1 = delta if baseline_range[1] is None else baseline_range[1]
-        baseline_s = np.median(out[bi0:bi1],axis=0)
+        if len(out[bi0:bi1])>0:
+            baseline_s = np.median(out[bi0:bi1],axis=0)
+        else:
+            baseline_s = 0
+            try:
+                self.warning_empty_slice_baseline
+            except:
+                self.warning_empty_slice_baseline = True
+                #print("Signal.get_segment() empty slice for baseline, using 0.",bi0,bi1)
+            
         if baseline and baseline_mode=="constant": 
             out.data -= baseline_s
         elif baseline and baseline_mode=="exp":
@@ -739,7 +750,7 @@ class Signal:
                 print("\r",end="")
             except Exception as e:
                 self.log("Problems with trace "+str(k)+": "+str(e))
-
+                
     def appl_photobl(self, j=None, verbose=True):
         '''Apply the precomputed photobleaching correction.
         
@@ -762,8 +773,11 @@ class Signal:
             
         for k in iterate_over:
             data_photobleach_fit = self._double_exp(X,self.photobl_p[k])*self.maxY[k]
-            self.data[:,k] /= (1.+data_photobleach_fit)
-            self.data[:,k] *= self.maxY[k]
+            if np.any(np.abs(data_photobleach_fit)<1e-2): 
+                self.log("\tSkipping "+str(k)+" because of zero crossing.",verbose)
+                continue
+            self.data[:,k] /= data_photobleach_fit#(1.+data_photobleach_fit)
+            self.data[:,k] *= data_photobleach_fit[0]#self.maxY[k]
             
     #def get_photobl_fit(self, X, k=None):
     
@@ -952,8 +966,6 @@ class Signal:
             Local standard deviation. Output shape depends on data input.
         '''
         
-        if len(data)==0: return 0.0
-        
         # Check if the cached loc_std can be useful
         if data is None and self.loc_std_cached is not None:
             if self.loc_std_cached["window"]==window:
@@ -965,6 +977,8 @@ class Signal:
         else: 
             data = np.array(data)
             data_was_none = False
+            
+        if len(data)==0: return 0.0
 
         if len(data.shape)>1:        
             loc_std = np.zeros(data.shape[1])
@@ -1051,6 +1065,7 @@ class Signal:
         if os.path.isfile(fname):
             f = open(fname,"r")
             l = f.readline()
+            f.close()
             if l[-1]=="\n": l=l[:-1]
             mnt = float(l)
         else:
