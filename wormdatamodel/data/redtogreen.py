@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+'''
+Contains functions related to the mapping between the red and the green
+channels of the frames. Its functions are made available in the 
+wormdatamodel.data namespace.
+
+Imports
+-------
+numpy, scipy.io, pygmmreg, matplotlib.pyplot
+'''
+
 import numpy as np
 import scipy.io as sio
 import pygmmreg as pyg
@@ -6,8 +17,7 @@ import matplotlib.pyplot as plt
 foldername = "/tigress/LEIFER/francesco/pumpprobe/immobilizationtest/REDGREEN_objectivesregistration_20190717_094840/"
 
 def redToGreen(Cervelli_R, source="LabView", folder=foldername):
-    '''
-    Transforms coordinates from the red to the green part of the image. The
+    '''Transforms coordinates from the red to the green part of the image. The
     transformation is purely 2D, the z coordinates are untouched.
     
     Parameters
@@ -15,6 +25,12 @@ def redToGreen(Cervelli_R, source="LabView", folder=foldername):
     Cervelli_R: numpy array (or irrarray or equivalent)
         Cervelli_R[j,n] gives the coordinate n of point j. The coordinates are
         in zyx (indexing) ordering.
+    source: string
+        Source from where the geometric transformation parameters have been
+        generated (up to now, all the sources produce the same format as 
+        "LabView").
+    folder: string
+        Folder containing the parameters of the geometric transformation.
         
     Returns
     -------
@@ -36,7 +52,7 @@ def redToGreen(Cervelli_R, source="LabView", folder=foldername):
 
     # Flip zyx to xyz, and set all the z to -1 for the 2D transformation
     # Copy just coord to avoid passing weird stuff to the C code
-    Points = np.copy(Cervelli_G.coord[:,::-1].astype(np.float)) 
+    Points = np.copy(Cervelli_G[:,::-1].astype(np.float)) 
     Points[:,0:2] = Points[:,0:2]
     Points[:,2] = -1.0
 

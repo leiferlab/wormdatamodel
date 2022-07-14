@@ -24,11 +24,12 @@ _legacy_c = Extension('wormdatamodel.data._legacy_c',
                     extra_compile_args=['-O3','-D_FILE_OFFSET_BITS=64'])#
                     
 # Get git commit info to build version number/tag
-repo = git.Repo('.git')
-git_hash = repo.head.object.hexsha
-git_url = repo.remotes.origin.url
-v = repo.git.describe()
-if repo.is_dirty(): v += ".dirty"
+#repo = git.Repo('.git')
+#git_hash = repo.head.object.hexsha
+#git_url = repo.remotes.origin.url
+#v = repo.git.describe(always=True)
+#if repo.is_dirty(): v += ".dirty"
+v = 1.5
 
 setup(name='wormdatamodel',
       version=v,

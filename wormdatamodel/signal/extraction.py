@@ -1,20 +1,40 @@
+'''
+Functions related to the extraction of signal from the frames, coded as numpy
+slicing and eventual weighting.
+
+Imports
+-------
+numpy
+'''
+
 import numpy as np
 
 def _generate_box_indices(Centers, box_size=(1,3,3), Box=np.array([]), 
                           shape=[None,None,None]):
     '''
-    Generate indices for slicing of an array to extract boxes/windows of given
-    size centered on Centers.
+    Generate indices for slicing of an array to extract the pixels in 
+    boxes/windows of given size centered on Centers.
     
     Parameters
     ----------
-    Centers: np.array of integers
+    Centers: numpy array of integers
         Centers[center_index, coordinate]. Coordinates are in slicing order, not
         plotting order (i.e. z,y,x for volumetric images).
-    
-    box_size: list of odd integers
+    box_size: list of odd integers (optional)
         Size of the boxes centered on each Center[i]. Again, coordinates are in
-        slicing order.
+        slicing order. This parameter is used if the parameter Box is not passed
+        or its shape[0] is 0. Default: (1,3,3)
+    Box: numpy array (optional)
+        Custom box. Default: np.array([])
+    shape: list of integers
+        Shape of the frames array.
+        
+    Returns
+    -------
+    Indices: numpy array of integers
+        Indices over the frames representing the selected box repeated over the
+        Centers. Use this array to slice the frames array to extract the pixels
+        in the boxes around each center.        
     '''
     
     nCenters = Centers.shape[0]
@@ -23,7 +43,19 @@ def _generate_box_indices(Centers, box_size=(1,3,3), Box=np.array([]),
     if Box.shape[0]==0:
         box_size = np.array(box_size)
         nElements = np.prod(box_size)
-        if np.all(box_size==np.array([3,5,5])):
+        if np.all(box_size==np.array([5,5,5])):
+            Box = np.array([
+                   [-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,\
+                   -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,\
+                   2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+                   [-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2,\
+                   -2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2,\
+                   -2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2],
+                   [-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,\
+                   -2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,\
+                   -2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2,-2,-1,0,1,2]
+                         ])
+        elif np.all(box_size==np.array([3,5,5])):
             Box = np.array([
                     [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                     [-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,0,0,0,1,1,1,1,1,2,2,2,2,2],
@@ -122,6 +154,12 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         box_size = kwargs['box_size']
         nElements = np.prod(box_size)
         
+        try: select_max = kwargs['select_max']
+        except: select_max = False
+        
+        try: select_max_n = kwargs['select_max_n']
+        except: select_max_n = 5
+        
         if len(box_size)!=nCoord:
             print("Number of coordinates in Neuron coordinate and box_size "+\
                 "don't match.")
@@ -135,7 +173,11 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         
         # Reshape and sum values in each box
         Values = Values.reshape((nNeuron,nElements))
-        Signal = np.average(Values, axis=1)
+        np.clip(Values,0,None,Values)
+        if not select_max:
+            Signal = np.average(Values, axis=1)
+        else:
+            Signal = np.average(np.sort(Values,axis=1)[:,-select_max_n:],axis=1)
     
         return Signal
     elif method=="weightedMask":
@@ -148,6 +190,145 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
             [0, -1,0,0,0,1, -2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2, -2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2, -2,-1,-1,-1,0,  0,0,0,0, 1,1,1,2, -1,0,0,0,1, 0],
             [0,  0,1,0,1,0,  0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0,  0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0,  0,-1, 0, 1,-2,-1,0,1,2,-1,0,1,0,  0,1,0,1,0, 0]
             ])
+            
+        Box = []
+        iz = -3
+        Box.append([iz,-1,-1])
+        Box.append([iz,-1,0])
+        Box.append([iz,-1,1])
+        Box.append([iz,0,-1])
+        Box.append([iz,0,0])
+        Box.append([iz,0,1])
+        Box.append([iz,1,-1])
+        Box.append([iz,1,0])
+        Box.append([iz,1,0])
+        
+        iz = -2
+        Box.append([iz,-2,0])
+        Box.append([iz,-1,-1])
+        Box.append([iz,-1,0])
+        Box.append([iz,-1,1])
+        Box.append([iz,0,-2])
+        Box.append([iz,0,-1])
+        Box.append([iz,0,0])
+        Box.append([iz,0,1])
+        Box.append([iz,0,2])
+        Box.append([iz,1,-1])
+        Box.append([iz,1,0])
+        Box.append([iz,1,1])
+        Box.append([iz,2,0])
+            
+        for iz in np.array([-1,0,1]):
+            Box.append([iz,-3,0])
+            Box.append([iz,-2,-1])
+            Box.append([iz,-2,0])
+            Box.append([iz,-2,1])
+            Box.append([iz,-1,-2])
+            Box.append([iz,-1,-1])
+            Box.append([iz,-1,0])
+            Box.append([iz,-1,1])
+            Box.append([iz,-1,2])
+            Box.append([iz,0,-3])
+            Box.append([iz,0,-2])
+            Box.append([iz,0,-1])
+            Box.append([iz,0,0])
+            Box.append([iz,0,1])
+            Box.append([iz,0,2])
+            Box.append([iz,0,3])
+            Box.append([iz,1,-2])
+            Box.append([iz,1,-1])
+            Box.append([iz,1,0])
+            Box.append([iz,1,1])
+            Box.append([iz,1,2])
+            Box.append([iz,2,-1])
+            Box.append([iz,2,0])
+            Box.append([iz,2,1])
+            Box.append([iz,3,0])
+            
+        iz = 2
+        Box.append([iz,-2,0])
+        Box.append([iz,-1,-1])
+        Box.append([iz,-1,0])
+        Box.append([iz,-1,1])
+        Box.append([iz,0,-2])
+        Box.append([iz,0,-1])
+        Box.append([iz,0,0])
+        Box.append([iz,0,1])
+        Box.append([iz,0,2])
+        Box.append([iz,1,-1])
+        Box.append([iz,1,0])
+        Box.append([iz,1,1])
+        Box.append([iz,2,0])
+        
+        iz = 3
+        Box.append([iz,-1,-1])
+        Box.append([iz,-1,0])
+        Box.append([iz,-1,1])
+        Box.append([iz,0,-1])
+        Box.append([iz,0,0])
+        Box.append([iz,0,1])
+        Box.append([iz,1,-1])
+        Box.append([iz,1,0])
+        Box.append([iz,1,0])
+        
+        Box = np.array(Box).T
+        
+        TM = np.zeros((119,51))
+        TM[0:9,0] = 1.0
+        TM[-9:,-1] = 1.0
+        
+        for sab in [[9,1],[9+13+25+25+25,1+5+13+13+13]]:
+            sa = sab[0]
+            sb = sab[1]
+            TM[sa+0,sb+0] = 1.0
+            TM[sa+1,sb+0] = TM[sa+1,sb+1] = TM[sa+1,sb+2] = 1./3.
+            TM[sa+2,sb+0] = TM[sa+2,sb+2] = 0.5
+            TM[sa+3,sb+0] = TM[sa+3,sb+2] = TM[sa+3,sb+3] = 1./3.0
+            TM[sa+4,sb+1] = 1.0
+            TM[sa+5,sb+1] = TM[sa+5,sb+2] = 0.5
+            TM[sa+6,sb+2] = 1.0
+            TM[sa+7,sb+2] = TM[sa+7,sb+3] = 0.5
+            TM[sa+8,sb+3] = 1.0
+            TM[sa+9,sb+1] = TM[sa+9,sb+2] = TM[sa+9,sb+4] = 1./3.
+            TM[sa+10,sb+2] = TM[sa+10,sb+4] = 0.5
+            TM[sa+11,sb+3] = TM[sa+11,sb+2] = TM[sa+11,sb+4] = 1./3.
+            TM[sa+12,sb+4] = 1.0
+        
+        for sab in [[9+13,1+5],[9+13+25,1+5+13],[9+13+25+25,1+5+13+13]]:
+            sa = sab[0]
+            sb = sab[1]
+            TM[sa+0,sb+0] = 1.0
+            TM[sa+1,sb+0] = TM[sa+1,sb+1] = TM[sa+1,sb+2] = 1./3.
+            TM[sa+2,sb+0] = TM[sa+2,sb+2] = 0.5
+            TM[sa+3,sb+0] = TM[sa+3,sb+2] = TM[sa+3,sb+3] = 1./3.
+            TM[sa+4,sb+1] = TM[sa+4,sb+4] = TM[sa+4,sb+5] = 1./3.
+            TM[sa+5,sb+1] = TM[sa+5,sb+2] = TM[sa+5,sb+5] = TM[sa+5,sb+6] = 0.25
+            TM[sa+6,sb+2] = TM[sa+6,sb+6] = 0.5
+            TM[sa+7,sb+2] = TM[sa+7,sb+3] = TM[sa+7,sb+6] = TM[sa+7,sb+7] = 0.25
+            TM[sa+8,sb+3] = TM[sa+8,sb+7] = TM[sa+8,sb+8] = 1./3.
+            TM[sa+9,sb+4] = 1.0
+            TM[sa+10,sb+4] = TM[sa+10,sb+5] = 0.5
+            TM[sa+11,sb+5] = TM[sa+11,sb+6] = 0.5
+            TM[sa+12,sb+6] = 1.0
+            TM[sa+13,sb+6] = TM[sa+13,sb+7] = 0.5
+            TM[sa+14,sb+7] = TM[sa+14,sb+8] = 0.5
+            TM[sa+15,sb+8] = 1.0
+            TM[sa+16,sb+4] = TM[sa+16,sb+5] = TM[sa+16,sb+9] = 1./3.
+            TM[sa+17,sb+5] = TM[sa+17,sb+6] = TM[sa+17,sb+9] = TM[sa+17,sb+10] = 0.25
+            TM[sa+18,sb+6] = TM[sa+17,sb+10] = 0.5
+            TM[sa+19,sb+6] = TM[sa+19,sb+7] = TM[sa+19,sb+10] = TM[sa+19,sb+11] = 1./3.
+            TM[sa+20,sb+7] = TM[sa+20,sb+8] = TM[sa+20,sb+11] = 1./3.
+            TM[sa+21,sb+9] = TM[sa+21,sb+10] = TM[sa+21,sb+12] = 1./3.
+            TM[sa+22,sb+10] = TM[sa+22,sb+12] = 0.5
+            TM[sa+23,sb+10] = TM[sa+23,sb+11] = TM[sa+23,sb+12] = 1./3.
+            TM[sa+24,sb+12] = 1.0
+        
+        weights_new = np.zeros((weights.shape[0],119))
+        for qu in np.arange(weights.shape[0]):
+            weights_new[qu] = np.dot(TM,weights[qu])
+        
+        weights = weights_new
+        nElements = 119
         
         # Generate indices based on box
         Indices = _generate_box_indices(Neurons, Box=Box, shape=Frames.shape)
@@ -157,13 +338,9 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         
         # Reshape, multiply by weights and sum values in each box
         Values = Values.reshape((nNeuron,nElements))-framePixelOffset
-        # <FIXME>
-        weights2 = np.max(weights,axis=1)[:,None]-weights
-        wValues = Values*weights2
-        wValues /= np.sum(weights2,axis=1)[:,None]
-        # </FIXME>
-        #wValues = Values*weights
-        #wValues /= np.sum(weights,axis=1)[:,None]
+        np.clip(Values,0,None,Values)
+        wValues = Values*weights
+        wValues /= np.sum(weights,axis=1)[:,None]
         
         try:
             Signal = np.average(Values, axis=1)
@@ -196,7 +373,7 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         wValues = Values*weights
         wValues /= np.sum(weights,axis=1)[:,None]
         
-        Signal = np.average(Values, axis=1)
+        Signal = np.average(Values, axis=1) 
         
         return Signal
         
