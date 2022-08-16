@@ -9,6 +9,7 @@ from scipy.optimize import minimize
 from scipy.ndimage import median_filter
 from scipy.special import comb
 from scipy.signal import savgol_coeffs
+from scipy.io import loadmat as sioloadmat
 from copy import deepcopy as deepcopy
 from datetime import datetime
 import mistofrutta.struct.irrarray as irrarray
@@ -258,6 +259,20 @@ class Signal:
             
                 inst = cls(data,info,filename,*args,**kwargs)
                 #return inst
+            elif os.path.isfile(folder+"heatData.mat"):
+                # For importing from the matlab files of the old pipeline
+                f = sioloadmat(folder+'heatData.mat')
+                data = f[filename]
+                info = {"method": "box", "version": "Jeff/Matlab", "ref_index": "Nerve multiple"}
+                inst = cls(data,info,filename,*args,**kwargs)
+            elif os.path.isfile(folder+"heatDataMS.mat"):
+                # For importing from the matlab files of the old pipeline.
+                # Additional weird file that shows up. People really had fun 
+                # naming files.
+                f = sioloadmat(folder+'heatDataMS.mat')
+                data = f[filename]
+                info = {"method": "box", "version": "Jeff/Matlab", "ref_index": "Nerve multiple"}
+                inst = cls(data,info,filename,*args,**kwargs)
             else:
                 print(folder+filename+" is not present.")
                 quit()
