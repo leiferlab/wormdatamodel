@@ -206,6 +206,7 @@ class Signal:
         appl_preproc = False
         from_pickle = False
         nan_th = None
+        matchless_nan_th_added_only = False
         
         if "matchless_nan_th_from_file" in kwargs.keys():
             nan_th_ = cls.get_matchless_nan_th_from_file(folder)
@@ -218,6 +219,11 @@ class Signal:
             if kwargs["matchless_nan_th"] is not None:
                 nan_th = kwargs["matchless_nan_th"]
             kwargs.pop("matchless_nan_th")
+            
+        if "matchless_nan_th_added_only" in kwargs.keys():
+            if kwargs["matchless_nan_th_added_only"] is not None:
+                matchless_nan_th_added_only = kwargs["matchless_nan_th_added_only"]
+            kwargs.pop("matchless_nan_th_added_only")
         
         if filename.split(".")[-1] == "txt": 
             fname_base = ".".join(filename.split(".")[:-1])
@@ -259,18 +265,21 @@ class Signal:
             
                 inst = cls(data,info,filename,*args,**kwargs)
                 #return inst
-            elif os.path.isfile(folder+"heatData.mat"):
+            elif filename in ["gRaw","rRaw","R2","gRaw.mat","rRaw.mat","R2.mat"] and os.path.isfile(folder+"heatData.mat"):
                 # For importing from the matlab files of the old pipeline
                 f = sioloadmat(folder+'heatData.mat')
-                data = f[filename]
+                if filename.split(".")[-1]=="mat": filename = filename.split(".")[0]
+                data = f[filename].T
                 info = {"method": "box", "version": "Jeff/Matlab", "ref_index": "Nerve multiple"}
                 inst = cls(data,info,filename,*args,**kwargs)
-            elif os.path.isfile(folder+"heatDataMS.mat"):
+            elif filename in ["gRaw","rRaw","R2","gRaw.mat","rRaw.mat","R2.mat"] and os.path.isfile(folder+"heatDataMS.mat"):
                 # For importing from the matlab files of the old pipeline.
                 # Additional weird file that shows up. People really had fun 
                 # naming files.
                 f = sioloadmat(folder+'heatDataMS.mat')
-                data = f[filename]
+                
+                if filename.split(".")[-1]=="mat": filename = filename.split(".")[0]
+                data = f[filename].T
                 info = {"method": "box", "version": "Jeff/Matlab", "ref_index": "Nerve multiple"}
                 inst = cls(data,info,filename,*args,**kwargs)
             else:
@@ -284,13 +293,26 @@ class Signal:
         matchless_present=os.path.isfile(folder+mtchlss_fname)
         if nan_th is not None and matchless_present:
             too_many_nans=np.sum(inst.nan_mask,axis=0)>=nan_th*inst.data.shape[0]
-            #print(np.where(too_many_nans))
+            
+            # If requested, apply the substitution with the matchless only to
+            # the neurons that have been manually added. Those neurons are 
+            # always the ones appended to the end.
+            if matchless_nan_th_added_only:
+                added_neu = wormdm.signal.manually_added_neurons_n(folder)
+                if added_neu>0:
+                    too_many_nans[:-added_neu] = False
+                else:
+                    too_many_nans[:] = False
             
             if np.any(too_many_nans):
                 print("Signal "+fname_base+": substituting some with matchless.")
                 mtchlss, _ = wormdm.signal.from_file(folder,mtchlss_fname)
                 inst.data[:,too_many_nans] = mtchlss[:,too_many_nans]
                 inst.nan_mask[:,too_many_nans] = np.isnan(inst.data[:,too_many_nans])
+                
+                # Re-interpolate nans (unclear why this would be necessary,
+                # but maybe there are some weird volumes that are skipped 
+                # entirely)
                 for i in np.where(too_many_nans)[0]:
                     # nans: location of nans
                     # x: function that finds the non-zero entries

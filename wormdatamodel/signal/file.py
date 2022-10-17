@@ -140,6 +140,29 @@ def from_file_info(folder, filename):
         
     return info
     
+def manually_added_neurons_n(folder,added_neurons_fname="added_ref_neurons.txt"):
+    '''Returns the number of neurons that have been manually added. They are the
+    last neurons in the list.
+    
+    Parameters
+    ----------
+    folder: string
+        Folder of the dataset.
+    
+    Returns
+    -------
+    n: int
+        Number of neurons that have been manually added.
+    '''
+    if folder[-1]!="/": folder+="/"
+    
+    n = 0
+    if os.path.isfile(folder+added_neurons_fname):
+        an = np.loadtxt(folder+added_neurons_fname)
+        n = an.shape[0]
+        
+    return n
+    
 def load_ds_list(fname,tags=None,exclude_tags=None,return_tags=False):
     '''Loads the list of dataset folder names given the filename of a 
     text file containing a folder name per line. Comments start with # (both
