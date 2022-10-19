@@ -209,10 +209,11 @@ class Signal:
         matchless_nan_th_added_only = False
         
         if "matchless_nan_th_from_file" in kwargs.keys():
-            nan_th_ = cls.get_matchless_nan_th_from_file(folder)
-            if nan_th_ is not None:
-                nan_th = nan_th_
-                print("Signal: using matchless_nan_th_from_file=",nan_th)
+            if kwargs["matchless_nan_th_from_file"]:
+                nan_th_ = cls.get_matchless_nan_th_from_file(folder)
+                if nan_th_ is not None:
+                    nan_th = nan_th_
+                    print("Signal: using matchless_nan_th_from_file=",nan_th)
             kwargs.pop("matchless_nan_th_from_file")
         
         if "matchless_nan_th" in kwargs.keys():
