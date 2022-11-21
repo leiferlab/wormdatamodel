@@ -639,6 +639,9 @@ class Signal:
             #for tempo in np.arange(ratio.data.shape[0]):
                 #dr[tempo,j] = bdf(ratio.data[:,j],tempo,1)
         return deriv
+        
+    def get_global_baseline(self,neuron_i,quantile=0.05):
+        return np.nanquantile(self.data[:,neuron_i],q=quantile)
             
     def get_segment(self,i0,i1,delta=0,
                     baseline=True,baseline_range=None,baseline_mode="constant",
