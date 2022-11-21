@@ -11,7 +11,6 @@ numpy, scipy.io, pygmmreg, matplotlib.pyplot
 
 import numpy as np
 import scipy.io as sio
-import pygmmreg as pyg
 import matplotlib.pyplot as plt
 
 foldername = "/tigress/LEIFER/francesco/pumpprobe/immobilizationtest/REDGREEN_objectivesregistration_20190717_094840/"
@@ -37,6 +36,8 @@ def redToGreen(Cervelli_R, source="LabView", folder=foldername):
     Cervelli_G: numpy array (or irrarray or equivalent)
         Analogous to Cervelli_R, with y and x coordinates transformed.
     '''
+    
+    import pygmmreg as pyg
 
     ## Load tps transformation pre-computed from LabView
     Ctrl, Param, normParam, denormParam = pyg.loadParam(
@@ -81,6 +82,8 @@ def genRedToGreen(folder, plot=False):
         
     Saves to file the results. Use directly redToGreen, passing the same folder.
     '''
+    
+    import pygmmreg as pyg
     
     if folder[-1]!="/":folder+="/"
     cont=sio.loadmat(folder+"alignments.mat")

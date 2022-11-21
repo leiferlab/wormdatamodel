@@ -217,6 +217,11 @@ class recording:
                 self.latencyShift = settings["latencyShift"]
             except:
                 self.latencyShift = 0
+                
+            try:
+                self.manualZUmOverV = settings["zUmOverV"]
+            except:
+                self.manualZUmOverV = None
             
             # Load extra information
             self.load_extra()
@@ -551,13 +556,14 @@ class recording:
             # nan entries. They will be interpolated below.
             
             if indexInDAQ[0].shape[0] == 1:
-                neighbor_adjacent = ((frameCountDAQ[indexInDAQ[0][0]]-frameCountDAQ[indexInDAQ[0][0]-1])==1) and ((frameCountDAQ[indexInDAQ[0][0]+1]-frameCountDAQ[indexInDAQ[0][0]])==1)
-                #self.DAQneighbor_adjacent[i] =  neighbor_adjacent
-                
-                if neighbor_adjacent:
-                    volumeIndex[i] = volumeIndexDAQ[indexInDAQ]
-                    self.Z[i] = ZDAQ[indexInDAQ]
-                    self.volumeDirection[i] = (volumeDirectionDAQ[indexInDAQ]+1)//2
+                if indexInDAQ[0][0]+1 < len(frameCountDAQ):
+                    neighbor_adjacent = ((frameCountDAQ[indexInDAQ[0][0]]-frameCountDAQ[indexInDAQ[0][0]-1])==1) and ((frameCountDAQ[indexInDAQ[0][0]+1]-frameCountDAQ[indexInDAQ[0][0]])==1)
+                    #self.DAQneighbor_adjacent[i] =  neighbor_adjacent
+                    
+                    if neighbor_adjacent:
+                        volumeIndex[i] = volumeIndexDAQ[indexInDAQ]
+                        self.Z[i] = ZDAQ[indexInDAQ]
+                        self.volumeDirection[i] = (volumeDirectionDAQ[indexInDAQ]+1)//2
                 
         # Interpolate missing values for Z and volumeDirection
         # If there are gaps in frameCount (dropped frames) inside the volumes,  
@@ -602,17 +608,23 @@ class recording:
         # The file contains also the etlCalibrationMindpt and Maxdpt, which 
         # correspond to the diopters corresponding to 0 and 5 V, respectively.
         #try:
-        fz = open(self.foldername+self.filenameZDetails)
-        zDetails = json.load(fz)
-        fz.close()
-        self.zUmOverV = 1./zDetails["V/um"]
-        if "etlCalibrationMindpt" in zDetails.keys():
-            self.etlCalibrationMindpt = zDetails["etlCalibrationMindpt"]
-            self.etlCalibrationMaxdpt = zDetails["etlCalibrationMaxdpt"]
-            self.etlVMin = zDetails["etlVMin"]
-            self.etlVMax = zDetails["etlVMax"]
-            self.etlDptOverUm = zDetails["etl dpt/um"]
-            self.etlVOverDpt = (self.etlVMax-self.etlVMin) / (self.etlCalibrationMaxdpt-self.etlCalibrationMindpt)
+        if os.path.isfile(self.foldername+self.filenameZDetails):
+            fz = open(self.foldername+self.filenameZDetails)
+            zDetails = json.load(fz)
+            fz.close()
+            self.zUmOverV = 1./zDetails["V/um"]
+            if "etlCalibrationMindpt" in zDetails.keys():
+                self.etlCalibrationMindpt = zDetails["etlCalibrationMindpt"]
+                self.etlCalibrationMaxdpt = zDetails["etlCalibrationMaxdpt"]
+                self.etlVMin = zDetails["etlVMin"]
+                self.etlVMax = zDetails["etlVMax"]
+                self.etlDptOverUm = zDetails["etl dpt/um"]
+                self.etlVOverDpt = (self.etlVMax-self.etlVMin) / (self.etlCalibrationMaxdpt-self.etlCalibrationMindpt)
+        elif self.manualZUmOverV is not None:
+            self.zUmOverV = self.manualZUmOverV
+            zDetails = {}
+        else:
+            raise ValueError("z-scan details absent. You need to pass zUmOverV in the settings of the recording object")
         #except:
         #    self.zUmOverV = 1./0.0625
             

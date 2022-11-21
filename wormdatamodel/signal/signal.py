@@ -9,6 +9,7 @@ from scipy.optimize import minimize
 from scipy.ndimage import median_filter
 from scipy.special import comb
 from scipy.signal import savgol_coeffs
+from scipy.io import loadmat as sioloadmat
 from copy import deepcopy as deepcopy
 from datetime import datetime
 import mistofrutta.struct.irrarray as irrarray
@@ -205,18 +206,25 @@ class Signal:
         appl_preproc = False
         from_pickle = False
         nan_th = None
+        matchless_nan_th_added_only = False
         
         if "matchless_nan_th_from_file" in kwargs.keys():
-            nan_th_ = cls.get_matchless_nan_th_from_file(folder)
-            if nan_th_ is not None:
-                nan_th = nan_th_
-                print("Signal: using matchless_nan_th_from_file=",nan_th)
+            if kwargs["matchless_nan_th_from_file"]:
+                nan_th_ = cls.get_matchless_nan_th_from_file(folder)
+                if nan_th_ is not None:
+                    nan_th = nan_th_
+                    print("Signal: using matchless_nan_th_from_file=",nan_th)
             kwargs.pop("matchless_nan_th_from_file")
         
         if "matchless_nan_th" in kwargs.keys():
             if kwargs["matchless_nan_th"] is not None:
                 nan_th = kwargs["matchless_nan_th"]
             kwargs.pop("matchless_nan_th")
+            
+        if "matchless_nan_th_added_only" in kwargs.keys():
+            if kwargs["matchless_nan_th_added_only"] is not None:
+                matchless_nan_th_added_only = kwargs["matchless_nan_th_added_only"]
+            kwargs.pop("matchless_nan_th_added_only")
         
         if filename.split(".")[-1] == "txt": 
             fname_base = ".".join(filename.split(".")[:-1])
@@ -258,6 +266,23 @@ class Signal:
             
                 inst = cls(data,info,filename,*args,**kwargs)
                 #return inst
+            elif filename in ["gRaw","rRaw","R2","gRaw.mat","rRaw.mat","R2.mat"] and os.path.isfile(folder+"heatData.mat"):
+                # For importing from the matlab files of the old pipeline
+                f = sioloadmat(folder+'heatData.mat')
+                if filename.split(".")[-1]=="mat": filename = filename.split(".")[0]
+                data = f[filename].T
+                info = {"method": "box", "version": "Jeff/Matlab", "ref_index": "Nerve multiple"}
+                inst = cls(data,info,filename,*args,**kwargs)
+            elif filename in ["gRaw","rRaw","R2","gRaw.mat","rRaw.mat","R2.mat"] and os.path.isfile(folder+"heatDataMS.mat"):
+                # For importing from the matlab files of the old pipeline.
+                # Additional weird file that shows up. People really had fun 
+                # naming files.
+                f = sioloadmat(folder+'heatDataMS.mat')
+                
+                if filename.split(".")[-1]=="mat": filename = filename.split(".")[0]
+                data = f[filename].T
+                info = {"method": "box", "version": "Jeff/Matlab", "ref_index": "Nerve multiple"}
+                inst = cls(data,info,filename,*args,**kwargs)
             else:
                 print(folder+filename+" is not present.")
                 quit()
@@ -269,13 +294,26 @@ class Signal:
         matchless_present=os.path.isfile(folder+mtchlss_fname)
         if nan_th is not None and matchless_present:
             too_many_nans=np.sum(inst.nan_mask,axis=0)>=nan_th*inst.data.shape[0]
-            #print(np.where(too_many_nans))
+            
+            # If requested, apply the substitution with the matchless only to
+            # the neurons that have been manually added. Those neurons are 
+            # always the ones appended to the end.
+            if matchless_nan_th_added_only:
+                added_neu = wormdm.signal.manually_added_neurons_n(folder)
+                if added_neu>0:
+                    too_many_nans[:-added_neu] = False
+                else:
+                    too_many_nans[:] = False
             
             if np.any(too_many_nans):
                 print("Signal "+fname_base+": substituting some with matchless.")
                 mtchlss, _ = wormdm.signal.from_file(folder,mtchlss_fname)
                 inst.data[:,too_many_nans] = mtchlss[:,too_many_nans]
                 inst.nan_mask[:,too_many_nans] = np.isnan(inst.data[:,too_many_nans])
+                
+                # Re-interpolate nans (unclear why this would be necessary,
+                # but maybe there are some weird volumes that are skipped 
+                # entirely)
                 for i in np.where(too_many_nans)[0]:
                     # nans: location of nans
                     # x: function that finds the non-zero entries
@@ -601,6 +639,9 @@ class Signal:
             #for tempo in np.arange(ratio.data.shape[0]):
                 #dr[tempo,j] = bdf(ratio.data[:,j],tempo,1)
         return deriv
+        
+    def get_global_baseline(self,neuron_i,quantile=0.05):
+        return np.nanquantile(self.data[:,neuron_i],q=quantile)
             
     def get_segment(self,i0,i1,delta=0,
                     baseline=True,baseline_range=None,baseline_mode="constant",

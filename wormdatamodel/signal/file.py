@@ -14,6 +14,7 @@ import pkg_resources
 import json
 import os
 import pickle
+import re
 
 def to_file(Signal, folder, filename, method, other={}):
     '''Save signal array to a text file. The array is saved with np.savetxt,
@@ -138,3 +139,92 @@ def from_file_info(folder, filename):
         info = {}
         
     return info
+    
+def manually_added_neurons_n(folder,added_neurons_fname="added_ref_neurons.txt"):
+    '''Returns the number of neurons that have been manually added. They are the
+    last neurons in the list.
+    
+    Parameters
+    ----------
+    folder: string
+        Folder of the dataset.
+    
+    Returns
+    -------
+    n: int
+        Number of neurons that have been manually added.
+    '''
+    if folder[-1]!="/": folder+="/"
+    
+    n = 0
+    if os.path.isfile(folder+added_neurons_fname):
+        an = np.loadtxt(folder+added_neurons_fname)
+        n = an.shape[0]
+        
+    return n
+    
+def load_ds_list(fname,tags=None,exclude_tags=None,return_tags=False):
+    '''Loads the list of dataset folder names given the filename of a 
+    text file containing a folder name per line. Comments start with # (both
+    for whole line and for annotations after the folder name).
+    
+    Parameters
+    ----------
+    fname: str
+        Name of the txt file containing the list of datasets.
+    tags: str (optional)
+        Space-separated tags to select datasets. Default: None.
+    exclude_tags: str (optional)
+        Space-separated tags to exclude in the dataset selection. Default:
+        None.
+    
+    Returns
+    -------
+    ds_list: list of str
+        List of the dataset folder names.
+    '''
+    
+    f = open(fname,"r")
+    ds_list = []
+    ds_tags_lists = []
+    if tags is not None: tags = tags.split(" ")
+    if exclude_tags is not None: exclude_tags = exclude_tags.split(" ")
+    
+    for l in f.readlines():
+        if l[0] not in ["#","\n"]: # Ignore commented lines
+            # Remove commented annotations
+            l2 = l.split("#")[0]
+            # Get tags
+            if len(l.split("#"))==0: 
+                # There are no tags
+                continue
+            tgs = l.split("#")[1].split(" ")
+            for it in np.arange(len(tgs)):
+                tgs[it] = re.sub(" ","",tgs[it])
+                tgs[it] = re.sub("\n","",tgs[it])
+                tgs[it] = re.sub("\r","",tgs[it])
+                tgs[it] = re.sub("\t","",tgs[it])
+            if tags is not None:
+                ok = [t in tgs or t=="" for t in tags]
+                if not np.all(ok): continue
+            if exclude_tags is not None:
+                not_ok = [t in tgs and t!="" for t in exclude_tags]
+                if np.any(not_ok): continue
+            
+            # Remove blank spaces, newlines, and tabs
+            l2 = re.sub(" ","",l2)
+            l2 = re.sub("\n","",l2)
+            l2 = re.sub("\r","",l2)
+            l2 = re.sub("\t","",l2)
+            
+            # Complete folder path with last / if necessary
+            if l2[-1]!="/":l2+="/" 
+            
+            ds_tags_lists.append(tgs)
+            ds_list.append(l2)
+    f.close()
+    
+    if return_tags:
+        return ds_list, ds_tags_lists
+    else:
+        return ds_list
