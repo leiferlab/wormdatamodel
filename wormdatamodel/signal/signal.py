@@ -283,6 +283,15 @@ class Signal:
                 data = f[filename].T
                 info = {"method": "box", "version": "Jeff/Matlab", "ref_index": "Nerve multiple"}
                 inst = cls(data,info,filename,*args,**kwargs)
+            elif filename in ["tmac_output.pkl","tmac_output","tmac"]:
+                filename = "tmac_output.pkl"
+                f = open(folder+"tmac_output.pkl","rb")
+                tmac = pickle.load(f)
+                f.close()
+                info = {"method": "box", "version": "tmac", "ref_index": "likely Nerve multiple", "tmac": tmac}
+                data = tmac["a"]#*np.mean(tmac["g_corrected"], axis=0, keepdims=True)
+                data = data[:,~np.all(np.isnan(tmac["a"]),axis=0)]
+                inst = cls(data,info,filename,*args,**kwargs)
             else:
                 print(folder+filename+" is not present.")
                 quit()
