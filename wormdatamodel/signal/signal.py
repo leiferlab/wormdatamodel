@@ -53,7 +53,7 @@ class Signal:
                  smooth = False, smooth_n=3, smooth_mode="rectangular", 
                  smooth_poly=1, remove_spikes = False,
                  photobl_calc = False, photobl_appl = False,
-                 corr_inst_photobl = False):
+                 corr_inst_photobl = False, verbose=True):
         '''Constructor for the class. 
         
         Parameters
@@ -99,6 +99,7 @@ class Signal:
         self.data = data;
         self.info = info;
         if description is not None: self.description = description
+        self.verbose = verbose
         
         # Preprocessing
         self.nan_mask = np.isnan(self.data)
@@ -207,6 +208,11 @@ class Signal:
         from_pickle = False
         nan_th = None
         matchless_nan_th_added_only = False
+        verbose = True
+        
+        if "verbose" in kwargs.keys():
+            verbose = kwargs["verbose"]
+            kwargs.pop("verbose")
         
         if "matchless_nan_th_from_file" in kwargs.keys():
             if kwargs["matchless_nan_th_from_file"]:
@@ -331,7 +337,9 @@ class Signal:
                         inst.data[nans,i] = np.interp(x(nans), x(~nans), inst.data[~nans,i])
                     except:
                         pass
-                
+        
+        inst.verbose = verbose
+           
         if appl_preproc:
             inst.apply_preprocessing(**kwargs)
         
@@ -765,7 +773,8 @@ class Signal:
         e = np.sum(np.power(f(X,P)-Y,2))
         return e
             
-    def calc_photobl(self, j=None, verbose=True):
+    def calc_photobl(self, j=None, verbose=None):
+        if verbose is None: verbose = self.verbose
         data_corr = np.copy(self.data)
         X = np.arange(self.data.shape[0])
         self.log("Calculating photobleaching correction, but not applying it.",verbose)
@@ -801,7 +810,7 @@ class Signal:
             except Exception as e:
                 self.log("Problems with trace "+str(k)+": "+str(e))
                 
-    def appl_photobl(self, j=None, verbose=True):
+    def appl_photobl(self, j=None, verbose=None):
         '''Apply the precomputed photobleaching correction.
         
         Parameters
@@ -811,6 +820,7 @@ class Signal:
             will be applied to all the neurons. Default: None.
         ''' 
         
+        if verbose is None: verbose = self.verbose
         self.log("Applying the photobleaching correction.",verbose)
         X = np.arange(self.data.shape[0])
         if j is None:
