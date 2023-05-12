@@ -128,10 +128,10 @@ class recording:
     
     # Optogenetics
     optogeneticsN = 0
-    optogeneticsFrameCount = np.zeros(optogeneticsN, dtype=np.int)
-    optogeneticsNPulses = np.zeros(optogeneticsN, dtype=np.int)
-    optogeneticsRepRateDivider = np.zeros(optogeneticsN, dtype=np.int)
-    optogeneticsNTrains = np.zeros(optogeneticsN, dtype=np.int)
+    optogeneticsFrameCount = np.zeros(optogeneticsN, dtype=int)
+    optogeneticsNPulses = np.zeros(optogeneticsN, dtype=int)
+    optogeneticsRepRateDivider = np.zeros(optogeneticsN, dtype=int)
+    optogeneticsNTrains = np.zeros(optogeneticsN, dtype=int)
     optogeneticsTimeBtwTrains = np.zeros(optogeneticsN)
     optogeneticsTargetX = np.zeros(optogeneticsN)
     optogeneticsTargetY = np.zeros(optogeneticsN)
@@ -536,9 +536,9 @@ class recording:
         
         # Get the volume to which each frame in FrameDetails belongs from the DAQ data
         volumeIndex = np.ones_like(frameCount)*(-10)
-        self.volumeDirection = np.empty(len(frameCount),dtype=np.float)#FIXME,dtype=np.int8)
+        self.volumeDirection = np.empty(len(frameCount),dtype=float)#FIXME,dtype=np.int8)
         self.volumeDirection[:] = np.nan
-        self.Z = np.empty(len(frameCount),dtype=np.float)
+        self.Z = np.empty(len(frameCount),dtype=float)
         self.Z[:] = np.nan
         # Debugging arrays
         #self.fcountfound = np.zeros(len(frameCount))
@@ -573,7 +573,7 @@ class recording:
         # neighboring volumes.
         nans, x = np.isnan(self.Z), lambda z: z.nonzero()[0]
         self.Z[nans]= np.interp(x(nans), x(~nans), self.Z[~nans])
-        self.volumeDirection[nans] = np.interp(x(nans), x(~nans), self.volumeDirection[~nans]).astype(np.float)#FIXME astype(np.int8)
+        self.volumeDirection[nans] = np.interp(x(nans), x(~nans), self.volumeDirection[~nans]).astype(float)#FIXME astype(np.int8)
         volumeIndex[nans]= np.interp(x(nans), x(~nans), volumeIndex[~nans])
         
         # Use the derivative of Z to determine the volumeDirection, instead of
@@ -674,9 +674,9 @@ class recording:
                 Line.pop(0)
                 if Line[-1]=="": Line.pop(-1)
                 self.optogeneticsN = len(Line)
-                self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=np.int)
-                self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=np.int)
-                self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=int)
+                self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=int)
+                self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=int)
                 self.optogeneticsTargetX = np.zeros(self.optogeneticsN)
                 self.optogeneticsTargetY = np.zeros(self.optogeneticsN)
                 self.optogeneticsTargetZ = np.zeros(self.optogeneticsN)
@@ -686,7 +686,7 @@ class recording:
                 self.optogeneticsTime = ["None"]*self.optogeneticsN
                 
                 #These won't be populated in this case
-                self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=int)
                 self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
                 
                 for i in np.arange(self.optogeneticsN):
@@ -707,10 +707,10 @@ class recording:
                 Line.pop(0)
                 if Line[-1]=="": Line.pop(-1)
                 self.optogeneticsN = len(Line)
-                self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=np.int)
-                self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=np.int)
-                self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=np.int)
-                self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=np.int)
+                self.optogeneticsFrameCount = np.zeros(self.optogeneticsN, dtype=int)
+                self.optogeneticsNPulses = np.zeros(self.optogeneticsN, dtype=int)
+                self.optogeneticsRepRateDivider = np.zeros(self.optogeneticsN, dtype=int)
+                self.optogeneticsNTrains = np.zeros(self.optogeneticsN, dtype=int)
                 self.optogeneticsTimeBtwTrains = np.zeros(self.optogeneticsN)
                 self.optogeneticsTargetX = np.zeros(self.optogeneticsN)
                 self.optogeneticsTargetY = np.zeros(self.optogeneticsN)
