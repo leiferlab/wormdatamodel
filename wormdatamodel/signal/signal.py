@@ -337,6 +337,18 @@ class Signal:
                         inst.data[nans,i] = np.interp(x(nans), x(~nans), inst.data[~nans,i])
                     except:
                         pass
+                        
+                matchless_sig = wormdm.signal.Signal.from_file(folder,mtchlss_fname)
+                inst.matchless_data = matchless_sig
+                inst.matchless_data_nanmask = np.isnan(inst.matchless_data.data)
+                for i in np.arange(mtchlss.shape[1]):
+                    # nans: location of nans
+                    # x: function that finds the non-zero entries
+                    nans, x = inst.nan_mask[:,i], lambda z: z.nonzero()[0]
+                    try:
+                        inst.matchless_data[nans,i] = np.interp(x(nans), x(~nans), inst.matchless_data[~nans,i])
+                    except:
+                        pass
         
         inst.verbose = verbose
            
