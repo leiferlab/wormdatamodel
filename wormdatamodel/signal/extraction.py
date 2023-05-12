@@ -169,7 +169,7 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         Indices = _generate_box_indices(Neurons, box_size, shape=Frames.shape)
         
         # Extract the values for each pixel
-        Values = _slice_array(Frames,Indices).astype(np.float)-framePixelOffset
+        Values = _slice_array(Frames,Indices).astype(float)-framePixelOffset
         
         # Reshape and sum values in each box
         Values = Values.reshape((nNeuron,nElements))
@@ -334,7 +334,7 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         Indices = _generate_box_indices(Neurons, Box=Box, shape=Frames.shape)
         
         # Extract the values for each pixel
-        Values = _slice_array(Frames,Indices).astype(np.float)
+        Values = _slice_array(Frames,Indices).astype(float)
         
         # Reshape, multiply by weights and sum values in each box
         Values = Values.reshape((nNeuron,nElements))-framePixelOffset
@@ -366,7 +366,7 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         Indices = _generate_box_indices(Neurons, Box=Box, shape=Frames.shape)
         
         # Extract the values for each pixel
-        Values = _slice_array(Frames,Indices).astype(np.float)
+        Values = _slice_array(Frames,Indices).astype(float)
         
         # Reshape, multiply by weights and sum values in each box
         Values = Values.reshape((nNeuron,nElements))-framePixelOffset
@@ -388,7 +388,7 @@ def extract(Frames, Neurons, method="box", framePixelOffset=0, **kwargs):
         Indices = _generate_box_indices(Neurons, box_size)
         
         # Extract the values for each pixel, reshape, subtract camera offset
-        Values = _slice_array(Frames,Indices).astype(np.float)
+        Values = _slice_array(Frames,Indices).astype(float)
         Values = Values.reshape((nNeuron,nElements))-framePixelOffset
         
         # Calculate average signal at central plane and next one, to be used

@@ -53,7 +53,7 @@ def redToGreen(Cervelli_R, source="LabView", folder=foldername):
 
     # Flip zyx to xyz, and set all the z to -1 for the 2D transformation
     # Copy just coord to avoid passing weird stuff to the C code
-    Points = np.copy(Cervelli_G[:,::-1].astype(np.float)) 
+    Points = np.copy(Cervelli_G[:,::-1].astype(float)) 
     Points[:,0:2] = Points[:,0:2]
     Points[:,2] = -1.0
 
@@ -63,7 +63,7 @@ def redToGreen(Cervelli_R, source="LabView", folder=foldername):
     # Copy the x y coordinates back into the neurons object Cervelli_G.
     # These will be directly the indices you use to extract the signal from the
     # frames.
-    Cervelli_G[:,1:] = np.rint(PointsB[:,0:2][:,::-1]).astype(np.int)
+    Cervelli_G[:,1:] = np.rint(PointsB[:,0:2][:,::-1]).astype(int)
     
     return Cervelli_G
     
